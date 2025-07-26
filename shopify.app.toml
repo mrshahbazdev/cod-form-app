@@ -27,13 +27,13 @@ scopes = "write_draft_orders,write_orders,write_products"
 
 [auth]
 redirect_urls = [
-  "https://c192fb75279c.ngrok-free.app/auth/callback",
-  "https://c192fb75279c.ngrok-free.app/auth/shopify/callback",
-  "https://c192fb75279c.ngrok-free.app/api/auth/callback"
+  "https://cod-form-app-7.onrender.com/auth/callback",
+  "https://cod-form-app-7.onrender.com/auth/shopify/callback",
+  "https://cod-form-app-7.onrender.com/api/auth/callback"
 ]
 
 [app_proxy]
-url = "https://c192fb75279c.ngrok-free.app/api/proxy"
+url = "https://cod-form-app-7.onrender.com/api/proxy"
 subpath = "cod-proxy"
 prefix = "apps"
 
