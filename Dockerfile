@@ -1,6 +1,10 @@
 FROM node:18-alpine
 
+<<<<<<< HEAD
 RUN apk add --no-cache openssl bash
+=======
+EXPOSE 8080
+>>>>>>> dcd326e5b7b0d7ae21b7a910d143c45ae001c067
 
 WORKDIR /app
 
