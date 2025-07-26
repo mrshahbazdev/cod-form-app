@@ -1,0 +1,272 @@
+{% comment %}
+  Yeh file ek popup modal (form) aur usko kholne wala button banati hai.
+  Merchant is button ke text, rang, aur form fields ko theme editor se tabdeel kar sakta hai.
+{% endcomment %}
+
+<style>
+  .cod-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  .cod-modal-content {
+    background-color: #fff;
+    padding: 25px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  }
+  .cod-modal-close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    border: none;
+    background: none;
+  }
+  .cod-form-field {
+    margin-bottom: 15px;
+  }
+  .cod-form-field label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+  }
+  .cod-form-field input, .cod-form-field select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  .cod-submit-btn {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 4px;
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  #cod-form-message {
+    margin-top: 15px;
+    text-align: center;
+  }
+</style>
+
+<div class="card">
+  <button id="open-cod-modal-btn" class="button button--primary" style="background-color: {{ block.settings.button_color }}; color: {{ block.settings.text_color }};">
+    {{ block.settings.button_text }}
+  </button>
+</div>
+
+<div id="cod-modal" class="cod-modal-overlay">
+  <div class="cod-modal-content">
+    <button id="cod-modal-close-btn" class="cod-modal-close">&times;</button>
+    <h2>{{ block.settings.form_title }}</h2>
+    <p>{{ block.settings.form_subtitle }}</p>
+    <hr style="margin: 15px 0;">
+    <form id="cod-form">
+      <div class="cod-form-field">
+        <label for="cod-name">Your name *</label>
+        <input type="text" id="cod-name" name="name" required>
+      </div>
+      <div class="cod-form-field">
+        <label for="cod-phone">Phone number *</label>
+        <input
+          type="tel"
+          id="cod-phone"
+          name="phone"
+          required
+          pattern="^((\+92)|(0092))-{0,1}\d{3}-{0,1}\d{7}$|^\d{11}$"
+          title="Please enter a valid Pakistani phone number (e.g., 03001234567 or +923001234567)">
+      </div>
+
+      {% if block.settings.show_email_field %}
+        <div class="cod-form-field">
+          <label for="cod-email">Email</label>
+          <input type="email" id="cod-email" name="email">
+        </div>
+      {% endif %}
+
+      <div class="cod-form-field">
+        <label for="cod-address">Address *</label>
+        <input type="text" id="cod-address" name="address" required>
+      </div>
+      <div class="cod-form-field">
+        <label for="cod-city">City *</label>
+        <input type="text" id="cod-city" name="city" required>
+      </div>
+      <div class="cod-form-field">
+        <label for="cod-province">Province *</label>
+        <select id="cod-province" name="province" required>
+          <option value="">Select Province</option>
+          <option value="Punjab">Punjab</option>
+          <option value="Sindh">Sindh</option>
+          <option value="Khyber Pakhtunkhwa">Khyber Pakhtunkhwa</option>
+          <option value="Balochistan">Balochistan</option>
+          <option value="Gilgit-Baltistan">Gilgit-Baltistan</option>
+          <option value="Azad Kashmir">Azad Kashmir</option>
+          <option value="Islamabad Capital Territory">Islamabad Capital Territory</option>
+        </select>
+      </div>
+      <button type="submit" class="cod-submit-btn" style="background-color: {{ block.settings.button_color }};">COMPLETE ORDER</button>
+      <div id="cod-form-message"></div>
+    </form>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const openBtn = document.getElementById('open-cod-modal-btn');
+    const modal = document.getElementById('cod-modal');
+    const closeBtn = document.getElementById('cod-modal-close-btn');
+    const codForm = document.getElementById('cod-form');
+    const messageDiv = document.getElementById('cod-form-message');
+    const submitBtn = codForm.querySelector('.cod-submit-btn');
+
+    openBtn.addEventListener('click', () => {
+      modal.style.display = 'flex';
+    });
+
+    closeBtn.addEventListener('click', () => {
+      modal.style.display = 'none';
+    });
+
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) {
+        modal.style.display = 'none';
+      }
+    });
+
+    codForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const originalBtnText = submitBtn.innerText;
+      submitBtn.innerText = 'PROCESSING...';
+      submitBtn.disabled = true;
+      messageDiv.innerText = '';
+
+      const cartResponse = await fetch('/cart.js');
+      const cart = await cartResponse.json();
+
+      if (cart.items.length === 0) {
+        messageDiv.style.color = 'red';
+        messageDiv.innerText = 'Your cart is empty. Please add items to cart first.';
+        submitBtn.innerText = originalBtnText;
+        submitBtn.disabled = false;
+        return;
+      }
+
+      const formData = new FormData(codForm);
+      const customerDetails = {
+        name: formData.get('name'),
+        phone: formData.get('phone'),
+        email: formData.get('email'), // Email field get kar rahe hain
+        address: formData.get('address'),
+        city: formData.get('city'),
+        province: formData.get('province'),
+      };
+
+      try {
+        const backendResponse = await fetch('/apps/cod-proxy/create-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            cartItems: cart.items,
+            customer: customerDetails
+          }),
+        });
+
+        const result = await backendResponse.json();
+
+        if (result.success) {
+          messageDiv.style.color = 'green';
+          messageDiv.innerText = 'Order placed successfully! Clearing cart...';
+          await fetch('/cart/clear.js', { method: 'POST' });
+
+          let redirectUrl = '/pages/thank-you';
+          if (result.orderId) {
+            redirectUrl = redirectUrl + `?order_id=${result.orderId}`;
+          }
+          window.location.href = redirectUrl;
+
+        } else {
+          throw new Error(result.error || 'Failed to create order.');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        messageDiv.style.color = 'red';
+        messageDiv.innerText = 'An error occurred: ' + error.message;
+        submitBtn.innerText = originalBtnText;
+        submitBtn.disabled = false;
+      }
+    });
+  });
+</script>
+
+{% schema %}
+{
+  "name": "Popup COD Form",
+  "target": "section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Button Settings"
+    },
+    {
+      "type": "text",
+      "id": "button_text",
+      "label": "Button Text",
+      "default": "Buy with Cash on Delivery"
+    },
+    {
+      "type": "color",
+      "id": "button_color",
+      "label": "Button Color",
+      "default": "#008060"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Button Text Color",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "header",
+      "content": "Form Settings"
+    },
+    {
+      "type": "text",
+      "id": "form_title",
+      "label": "Form Title",
+      "default": "Cash on Delivery"
+    },
+    {
+      "type": "text",
+      "id": "form_subtitle",
+      "label": "Form Subtitle",
+      "default": "Please enter your shipping address to complete the order."
+    },
+    {
+      "type": "checkbox",
+      "id": "show_email_field",
+      "label": "Show email field in form",
+      "default": false
+    }
+  ]
+}
+{% endschema %}

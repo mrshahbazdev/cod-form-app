@@ -1,0 +1,41 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "f2b6d10ee9ecab1abc5c76c658c442b9"
+name = "cod-form-app"
+handle = "cod-form-app-4"
+application_url = "https://c192fb75279c.ngrok-free.app"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+include_config_on_deploy = true
+
+[webhooks]
+api_version = "2025-07"
+
+  [[webhooks.subscriptions]]
+  topics = [ "app/scopes_update" ]
+  uri = "/webhooks/app/scopes_update"
+
+  [[webhooks.subscriptions]]
+  topics = [ "app/uninstalled" ]
+  uri = "/webhooks/app/uninstalled"
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "write_draft_orders,write_orders,write_products"
+
+[auth]
+redirect_urls = [
+  "https://c192fb75279c.ngrok-free.app/auth/callback",
+  "https://c192fb75279c.ngrok-free.app/auth/shopify/callback",
+  "https://c192fb75279c.ngrok-free.app/api/auth/callback"
+]
+
+[app_proxy]
+url = "https://c192fb75279c.ngrok-free.app/api/proxy"
+subpath = "cod-proxy"
+prefix = "apps"
+
+[pos]
+embedded = false
