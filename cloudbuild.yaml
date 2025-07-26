@@ -1,0 +1,33 @@
+steps:
+# Step 1: Aapke Dockerfile se container image banayega
+- name: 'gcr.io/cloud-builders/docker'
+  args:
+    - 'build'
+    - '-t'
+    - 'europe-west1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/cod-form-app:$COMMIT_SHA'
+    - '.'
+
+# Step 2: Nayi image ko Artifact Registry mein push karega
+- name: 'gcr.io/cloud-builders/docker'
+  args:
+    - 'push'
+    - 'europe-west1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/cod-form-app:$COMMIT_SHA'
+
+# Step 3: Nayi image ko Cloud Run par deploy karega
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
+  args:
+    - 'run'
+    - 'deploy'
+    - 'cod-form-app' # Aapki Cloud Run service ka naam
+    - '--image'
+    - 'europe-west1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/cod-form-app:$COMMIT_SHA'
+    - '--region'
+    - 'europe-west1' # Aapki Cloud Run service ka region
+    - '--platform'
+    - 'managed'
+    - '--allow-unauthenticated'
+
+# Build ki gayi images ki list
+images:
+- 'europe-west1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/cod-form-app:$COMMIT_SHA'
