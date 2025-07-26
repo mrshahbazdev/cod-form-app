@@ -3,7 +3,7 @@
 client_id = "f2b6d10ee9ecab1abc5c76c658c442b9"
 name = "cod-form-app"
 handle = "cod-form-app-4"
-application_url = "https://c192fb75279c.ngrok-free.app"
+application_url = "https://cod-form-app-7.onrender.com"
 embedded = true
 
 [build]
