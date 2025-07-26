@@ -67,6 +67,8 @@ export async function action({ request }) {
 
     const draftOrderId = draftOrderData.draftOrder.id;
 
+    // NAYI TABDEELI: Hum ab draft order ko 'complete' karenge
+    // taake woh direct "Orders" mein jaye
     const completeDraftOrderMutation = `
         mutation draftOrderComplete($id: ID!) {
             draftOrderComplete(id: $id) {
@@ -118,3 +120,4 @@ export async function action({ request }) {
     return json({ success: false, error: error.message }, { status: 500 });
   }
 }
+
