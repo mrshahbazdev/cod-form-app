@@ -1,7 +1,7 @@
 {% comment %}
   This file creates a popup modal (form) and a button to open it.
   The merchant can customize the button text, colors, and form fields from the theme editor.
-  Updated to include phone validation and configurable fields.
+  Updated to include phone validation, configurable fields, and more styling options.
 {% endcomment %}
 
 <style>
@@ -12,21 +12,23 @@
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.6);
-    z-index: 9999;
+    z-index: 999999;
     display: none;
     align-items: center;
     justify-content: center;
+    /* NAYI TABDEELI: Form lamba hone par scroll add karega */
+    overflow-y: auto;
+    padding: 20px 0;
   }
   .cod-modal-content {
-    background-color: #fff;
     padding: 25px;
     border-radius: 8px;
     width: 90%;
     max-width: 500px;
-    max-height: 90vh;
-    overflow-y: auto;
+    /* NAYI TABDEELI: max-height hata diya gaya hai taake form expand ho sake */
     position: relative;
     box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    margin: auto;
   }
   .cod-modal-close {
     position: absolute;
@@ -64,7 +66,6 @@
     padding: 12px;
     border: none;
     border-radius: 4px;
-    color: #fff;
     font-weight: bold;
     cursor: pointer;
     font-size: 16px;
@@ -82,20 +83,20 @@
 </div>
 
 <div id="cod-modal" class="cod-modal-overlay">
-  <div class="cod-modal-content">
-    <button id="cod-modal-close-btn" class="cod-modal-close">&times;</button>
+  <div class="cod-modal-content" style="background-color: {{ block.settings.form_bg_color }}; color: {{ block.settings.form_text_color }};">
+    <button id="cod-modal-close-btn" class="cod-modal-close" style="color: {{ block.settings.form_text_color }};">&times;</button>
     <h2>{{ block.settings.form_title }}</h2>
     <p>{{ block.settings.form_subtitle }}</p>
     <hr style="margin: 15px 0;">
     <form id="cod-form" novalidate>
       <div class="cod-form-field">
-        <label for="cod-name">Your name *</label>
+        <label for="cod-name" style="color: {{ block.settings.form_label_color }};">Your name *</label>
         <input type="text" id="cod-name" name="name" required>
       </div>
 
       {% if block.settings.show_phone_field %}
         <div class="cod-form-field">
-          <label for="cod-phone">Phone number *</label>
+          <label for="cod-phone" style="color: {{ block.settings.form_label_color }};">Phone number *</label>
           <input
             type="tel"
             id="cod-phone"
@@ -109,27 +110,27 @@
 
       {% if block.settings.show_email_field %}
         <div class="cod-form-field">
-          <label for="cod-email">Email</label>
+          <label for="cod-email" style="color: {{ block.settings.form_label_color }};">Email</label>
           <input type="email" id="cod-email" name="email">
         </div>
       {% endif %}
 
       {% if block.settings.show_address_field %}
         <div class="cod-form-field">
-          <label for="cod-address">Address *</label>
+          <label for="cod-address" style="color: {{ block.settings.form_label_color }};">Address *</label>
           <input type="text" id="cod-address" name="address" required>
         </div>
       {% endif %}
 
       {% if block.settings.show_city_field %}
         <div class="cod-form-field">
-          <label for="cod-city">City *</label>
+          <label for="cod-city" style="color: {{ block.settings.form_label_color }};">City *</label>
           <input type="text" id="cod-city" name="city" required>
         </div>
       {% endif %}
 
       <div class="cod-form-field">
-        <label for="cod-province">Province *</label>
+        <label for="cod-province" style="color: {{ block.settings.form_label_color }};">Province *</label>
         <select id="cod-province" name="province" required>
           <option value="">Select Province</option>
           <option value="Punjab">Punjab</option>
@@ -141,7 +142,7 @@
           <option value="Islamabad Capital Territory">Islamabad Capital Territory</option>
         </select>
       </div>
-      <button type="submit" class="cod-submit-btn" style="background-color: {{ block.settings.button_color }};">COMPLETE ORDER</button>
+      <button type="submit" class="cod-submit-btn" style="background-color: {{ block.settings.button_color }}; color: {{ block.settings.text_color }};">COMPLETE ORDER</button>
       <div id="cod-form-message"></div>
     </form>
   </div>
@@ -306,6 +307,24 @@ document.addEventListener('DOMContentLoaded', () => {
       "default": "Please enter your shipping address to complete the order."
     },
     {
+      "type": "color",
+      "id": "form_bg_color",
+      "label": "Form Background Color",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "color",
+      "id": "form_text_color",
+      "label": "Form Text Color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "form_label_color",
+      "label": "Form Label Color",
+      "default": "#333333"
+    },
+    {
       "type": "checkbox",
       "id": "show_phone_field",
       "label": "Show phone number field",
@@ -332,5 +351,3 @@ document.addEventListener('DOMContentLoaded', () => {
   ]
 }
 {% endschema %}
-
-```
