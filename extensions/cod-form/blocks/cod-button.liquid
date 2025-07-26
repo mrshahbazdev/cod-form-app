@@ -1,6 +1,6 @@
 {% comment %}
   This file creates a popup modal (form) and a button to open it.
-  When clicked on a product page, it first adds the product to the cart, then opens the form.
+  When clicked on a product page or collection, it first adds the product to the cart, then opens the form.
   The merchant can customize the button text, colors, and form fields from the theme editor.
 {% endcomment %}
 
@@ -75,61 +75,61 @@
 </style>
 
 <div class="card">
-  <button id="open-cod-modal-btn" class="button button--primary" style="background-color: {{ block.settings.button_color }}; color: {{ block.settings.text_color }};">
+  <button id="open-cod-modal-btn-{{ section.id }}-{{ block.id }}" class="button button--primary" style="background-color: {{ block.settings.button_color }}; color: {{ block.settings.text_color }};">
     {{ block.settings.button_text }}
   </button>
 </div>
 
-<div id="cod-modal" class="cod-modal-overlay">
+<div id="cod-modal-{{ section.id }}-{{ block.id }}" class="cod-modal-overlay">
   <div class="cod-modal-content" style="background-color: {{ block.settings.form_bg_color }}; color: {{ block.settings.form_text_color }};">
-    <button id="cod-modal-close-btn" class="cod-modal-close" style="color: {{ block.settings.form_text_color }};">&times;</button>
+    <button id="cod-modal-close-btn-{{ section.id }}-{{ block.id }}" class="cod-modal-close" style="color: {{ block.settings.form_text_color }};">&times;</button>
     <h2>{{ block.settings.form_title }}</h2>
     <p>{{ block.settings.form_subtitle }}</p>
     <hr style="margin: 15px 0;">
-    <form id="cod-form" novalidate>
+    <form id="cod-form-{{ section.id }}-{{ block.id }}" novalidate>
       <div class="cod-form-field">
-        <label for="cod-name" style="color: {{ block.settings.form_label_color }};">Your name *</label>
-        <input type="text" id="cod-name" name="name" required>
+        <label for="cod-name-{{ section.id }}-{{ block.id }}" style="color: {{ block.settings.form_label_color }};">Your name *</label>
+        <input type="text" id="cod-name-{{ section.id }}-{{ block.id }}" name="name" required>
       </div>
 
       {% if block.settings.show_phone_field %}
         <div class="cod-form-field">
-          <label for="cod-phone" style="color: {{ block.settings.form_label_color }};">Phone number *</label>
+          <label for="cod-phone-{{ section.id }}-{{ block.id }}" style="color: {{ block.settings.form_label_color }};">Phone number *</label>
           <input
             type="tel"
-            id="cod-phone"
+            id="cod-phone-{{ section.id }}-{{ block.id }}"
             name="phone"
             required
             pattern="^((\+92)|(0092))-{0,1}\d{3}-{0,1}\d{7}$|^\d{11}$"
             title="Please enter a valid Pakistani phone number (e.g., 03001234567)">
-          <div id="cod-phone-error" class="cod-form-error"></div>
+          <div id="cod-phone-error-{{ section.id }}-{{ block.id }}" class="cod-form-error"></div>
         </div>
       {% endif %}
 
       {% if block.settings.show_email_field %}
         <div class="cod-form-field">
-          <label for="cod-email" style="color: {{ block.settings.form_label_color }};">Email</label>
-          <input type="email" id="cod-email" name="email">
+          <label for="cod-email-{{ section.id }}-{{ block.id }}" style="color: {{ block.settings.form_label_color }};">Email</label>
+          <input type="email" id="cod-email-{{ section.id }}-{{ block.id }}" name="email">
         </div>
       {% endif %}
 
       {% if block.settings.show_address_field %}
         <div class="cod-form-field">
-          <label for="cod-address" style="color: {{ block.settings.form_label_color }};">Address *</label>
-          <input type="text" id="cod-address" name="address" required>
+          <label for="cod-address-{{ section.id }}-{{ block.id }}" style="color: {{ block.settings.form_label_color }};">Address *</label>
+          <input type="text" id="cod-address-{{ section.id }}-{{ block.id }}" name="address" required>
         </div>
       {% endif %}
 
       {% if block.settings.show_city_field %}
         <div class="cod-form-field">
-          <label for="cod-city" style="color: {{ block.settings.form_label_color }};">City *</label>
-          <input type="text" id="cod-city" name="city" required>
+          <label for="cod-city-{{ section.id }}-{{ block.id }}" style="color: {{ block.settings.form_label_color }};">City *</label>
+          <input type="text" id="cod-city-{{ section.id }}-{{ block.id }}" name="city" required>
         </div>
       {% endif %}
 
       <div class="cod-form-field">
-        <label for="cod-province" style="color: {{ block.settings.form_label_color }};">Province *</label>
-        <select id="cod-province" name="province" required>
+        <label for="cod-province-{{ section.id }}-{{ block.id }}" style="color: {{ block.settings.form_label_color }};">Province *</label>
+        <select id="cod-province-{{ section.id }}-{{ block.id }}" name="province" required>
           <option value="">Select Province</option>
           <option value="Punjab">Punjab</option>
           <option value="Sindh">Sindh</option>
@@ -141,26 +141,40 @@
         </select>
       </div>
       <button type="submit" class="cod-submit-btn" style="background-color: {{ block.settings.button_color }}; color: {{ block.settings.text_color }};">COMPLETE ORDER</button>
-      <div id="cod-form-message"></div>
+      <div id="cod-form-message-{{ section.id }}-{{ block.id }}"></div>
     </form>
   </div>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  const openBtn = document.getElementById('open-cod-modal-btn');
-  const modal = document.getElementById('cod-modal');
-  const closeBtn = document.getElementById('cod-modal-close-btn');
-  const codForm = document.getElementById('cod-form');
-  const messageDiv = document.getElementById('cod-form-message');
+  const uniqueId = "-{{ section.id }}-{{ block.id }}";
+  const openBtn = document.getElementById('open-cod-modal-btn' + uniqueId);
+  const modal = document.getElementById('cod-modal' + uniqueId);
+  const closeBtn = document.getElementById('cod-modal-close-btn' + uniqueId);
+  const codForm = document.getElementById('cod-form' + uniqueId);
+  const messageDiv = document.getElementById('cod-form-message' + uniqueId);
   const submitBtn = codForm.querySelector('.cod-submit-btn');
 
   // Modal display logic
   openBtn.addEventListener('click', async () => {
-    // NAYI TABDEELI: Pehle product ko cart mein add karein
-    const productForm = document.querySelector('form[action="/cart/add"]');
-    if (!productForm) {
-      // Agar product page par nahi hain, to direct modal khol dein (cart page ke liye)
+    // NAYI TABDEELI: Ab yeh code har jagah kaam karega
+    let variantId = null;
+    const productForm = document.querySelector('form[action="/cart/add"]'); // Product page form
+    const productCard = openBtn.closest('[data-product-id], .product-card, .grid__item'); // Collection/Featured product card
+
+    if (productForm) {
+      const formData = new FormData(productForm);
+      variantId = formData.get('id');
+    } else if (productCard) {
+      const variantInput = productCard.querySelector('input[name="id"]');
+      if (variantInput) {
+        variantId = variantInput.value;
+      }
+    }
+
+    if (!variantId) {
+      // Agar variant ID na mile (maslan, cart page par), to direct modal khol dein
       modal.style.display = 'flex';
       return;
     }
@@ -169,7 +183,10 @@ document.addEventListener('DOMContentLoaded', () => {
     openBtn.disabled = true;
 
     try {
-      const formData = new FormData(productForm);
+      const formData = new FormData();
+      formData.append('id', variantId);
+      formData.append('quantity', 1);
+
       const response = await fetch('/cart/add.js', {
         method: 'POST',
         body: formData,
@@ -180,7 +197,20 @@ document.addEventListener('DOMContentLoaded', () => {
         throw new Error(errorData.description || 'Could not add product to cart.');
       }
 
-      // Kamyabi se add hone ke baad modal khol dein
+      const updatedCartResponse = await fetch('/cart.js');
+      const updatedCart = await updatedCartResponse.json();
+      const itemCount = updatedCart.item_count;
+
+      const cartCountElements = document.querySelectorAll('.cart-count-bubble, .site-header__cart-count, [data-cart-count]');
+      cartCountElements.forEach(el => {
+        el.textContent = itemCount;
+      });
+
+      document.dispatchEvent(new CustomEvent('cart:updated', {
+        bubbles: true,
+        detail: { cart: updatedCart }
+      }));
+
       modal.style.display = 'flex';
 
     } catch (error) {
@@ -207,11 +237,10 @@ document.addEventListener('DOMContentLoaded', () => {
     submitBtn.disabled = true;
     messageDiv.innerText = '';
 
-    // --- Custom Validation ---
     let isValid = true;
-    const phoneInput = document.getElementById('cod-phone');
+    const phoneInput = document.getElementById('cod-phone' + uniqueId);
     if (phoneInput) {
-      const phoneErrorDiv = document.getElementById('cod-phone-error');
+      const phoneErrorDiv = document.getElementById('cod-phone-error' + uniqueId);
       const phoneRegex = new RegExp(phoneInput.pattern);
       if (!phoneRegex.test(phoneInput.value)) {
         phoneErrorDiv.innerText = phoneInput.title;
@@ -231,7 +260,6 @@ document.addEventListener('DOMContentLoaded', () => {
       submitBtn.disabled = false;
       return;
     }
-    // --- End Validation ---
 
     const cartResponse = await fetch('/cart.js');
     const cart = await cartResponse.json();
