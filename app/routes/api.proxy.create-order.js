@@ -1,5 +1,6 @@
 import { json } from "@remix-run/node";
 import { authenticate } from "../shopify.server";
+import db from "../db.server";
 
 export async function action({ request }) {
   console.log("--- PROXY ACTION V5 STARTED ---");
@@ -15,6 +16,17 @@ export async function action({ request }) {
     if (!cartItems || !customer) {
       return json({ success: false, error: "Missing cart or customer data." }, { status: 400 });
     }
+
+    // NAYI FUNCTIONALITY: Database se shipping rate hasil karein
+    const ratesFromDb = await db.shippingRate.findMany({ where: { shop: session.shop } });
+    const rates = {};
+    ratesFromDb.forEach(rate => { rates[rate.city.toLowerCase()] = rate.rate; });
+
+    const cityRate = customer.city ? rates[customer.city.trim().toLowerCase()] : undefined;
+
+    // NOTE: Yahan '250' default rate hai. Isko app ki global settings se aana chahiye.
+    // Hum isko baad mein behtar banayenge.
+    const shippingRate = cityRate !== undefined ? cityRate : 250.00;
 
     const lineItems = cartItems.map(item => ({
       variantId: `gid://shopify/ProductVariant/${item.variant_id}`,
@@ -53,6 +65,10 @@ export async function action({ request }) {
             },
             email: customer.email || `${customer.phone}@example.com`,
             tags: ["COD", "App Order"],
+            shippingLine: {
+              price: shippingRate.toFixed(2),
+              title: "Standard Shipping"
+            },
           },
         },
       }
@@ -67,8 +83,6 @@ export async function action({ request }) {
 
     const draftOrderId = draftOrderData.draftOrder.id;
 
-    // NAYI TABDEELI: Hum ab draft order ko 'complete' karenge
-    // taake woh direct "Orders" mein jaye
     const completeDraftOrderMutation = `
         mutation draftOrderComplete($id: ID!) {
             draftOrderComplete(id: $id) {
@@ -120,4 +134,3 @@ export async function action({ request }) {
     return json({ success: false, error: error.message }, { status: 500 });
   }
 }
-
