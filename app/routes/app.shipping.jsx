@@ -16,8 +16,9 @@ import db from "../db.server";
 
 // Step 1: Database se tamam rates fetch karein
 export async function loader({ request }) {
-  const { admin } = await authenticate.admin(request);
-  const shop = admin.rest.session.shop;
+  // NAYI TABDEELI: Hum 'session' ko direct hasil kar rahe hain
+  const { session } = await authenticate.admin(request);
+  const { shop } = session;
 
   const shippingRates = await db.shippingRate.findMany({
     where: { shop },
@@ -29,8 +30,9 @@ export async function loader({ request }) {
 
 // Step 2: Naye rate ko save ya purane ko delete karein
 export async function action({ request }) {
-  const { admin } = await authenticate.admin(request);
-  const shop = admin.rest.session.shop;
+  // NAYI TABDEELI: Hum 'session' ko direct hasil kar rahe hain
+  const { session } = await authenticate.admin(request);
+  const { shop } = session;
   const formData = await request.formData();
   const action = formData.get("_action");
 
@@ -52,19 +54,6 @@ export async function action({ request }) {
 
   return json({ success: true });
 }
-
-// Step 3: Prisma Schema ko update karein
-// Apni `prisma/schema.prisma` file mein yeh model add karein:
-/*
-model ShippingRate {
-  id    Int    @id @default(autoincrement())
-  shop  String
-  city  String
-  rate  Float
-
-  @@unique([shop, city], name: "shop_city")
-}
-*/
 
 export default function ShippingRatesPage() {
   const { rates } = useLoaderData();
