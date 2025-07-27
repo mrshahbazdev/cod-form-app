@@ -1,7 +1,5 @@
 {% comment %}
-  This file creates a popup modal (form) and a button to open it.
-  When clicked on a product page or collection, it first adds the product to the cart, then opens the form.
-  The merchant can customize the button text, colors, and form fields from the theme editor.
+  Updated to fetch dynamic shipping rates and update total on city change.
 {% endcomment %}
 
 <style>
@@ -197,6 +195,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
       updateCartSummary();
 
+      const cartCountElements = document.querySelectorAll('.cart-count-bubble, .site-header__cart-count, [data-cart-count]');
+      cartCountElements.forEach(el => {
+        el.textContent = currentCart.item_count;
+      });
       document.dispatchEvent(new CustomEvent('cart:updated', { bubbles: true, detail: { cart: currentCart } }));
 
       modal.style.display = 'flex';

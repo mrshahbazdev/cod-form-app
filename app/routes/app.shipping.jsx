@@ -1,5 +1,6 @@
+import { useState, useCallback, useEffect } from "react";
 import { json } from "@remix-run/node";
-import { useLoaderData, useSubmit, Form } from "@remix-run/react";
+import { useLoaderData, useSubmit, Form, useActionData } from "@remix-run/react";
 import {
   Page,
   Layout,
@@ -14,9 +15,8 @@ import {
 import { authenticate } from "../shopify.server";
 import db from "../db.server";
 
-// Step 1: Database se tamam rates fetch karein
+// Database se tamam rates fetch karein
 export async function loader({ request }) {
-  // NAYI TABDEELI: Hum 'session' ko direct hasil kar rahe hain
   const { session } = await authenticate.admin(request);
   const { shop } = session;
 
@@ -28,9 +28,8 @@ export async function loader({ request }) {
   return json({ rates: shippingRates });
 }
 
-// Step 2: Naye rate ko save ya purane ko delete karein
+// Naye rate ko save ya purane ko delete karein
 export async function action({ request }) {
-  // NAYI TABDEELI: Hum 'session' ko direct hasil kar rahe hain
   const { session } = await authenticate.admin(request);
   const { shop } = session;
   const formData = await request.formData();
@@ -42,7 +41,7 @@ export async function action({ request }) {
 
     if (city && !isNaN(rate)) {
       await db.shippingRate.upsert({
-        where: { shop_city: { shop, city } }, // Unique constraint
+        where: { shop_city: { shop, city } },
         update: { rate },
         create: { shop, city, rate },
       });
@@ -57,7 +56,24 @@ export async function action({ request }) {
 
 export default function ShippingRatesPage() {
   const { rates } = useLoaderData();
+  const actionData = useActionData();
   const submit = useSubmit();
+
+  // NAYI TABDEELI: Input fields ke liye state banayein
+  const [city, setCity] = useState("");
+  const [rate, setRate] = useState("");
+
+  const handleCityChange = useCallback((value) => setCity(value), []);
+  const handleRateChange = useCallback((value) => setRate(value), []);
+
+  // Jab form kamyabi se submit ho, to fields ko khali kar dein
+  useEffect(() => {
+    if (actionData?.success) {
+      setCity("");
+      setRate("");
+    }
+  }, [actionData]);
+
 
   const handleDelete = (id) => {
     const formData = new FormData();
@@ -106,6 +122,9 @@ export default function ShippingRatesPage() {
                       name="city"
                       autoComplete="off"
                       placeholder="e.g., Karachi"
+                      // NAYI TABDEELI: State ke saath connect karein
+                      value={city}
+                      onChange={handleCityChange}
                     />
                   </div>
                   <div style={{ flex: 1 }}>
@@ -115,6 +134,9 @@ export default function ShippingRatesPage() {
                       type="number"
                       autoComplete="off"
                       placeholder="e.g., 250"
+                      // NAYI TABDEELI: State ke saath connect karein
+                      value={rate}
+                      onChange={handleRateChange}
                     />
                   </div>
                   <div style={{ paddingTop: "24px" }}>
