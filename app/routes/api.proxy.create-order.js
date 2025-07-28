@@ -1,9 +1,7 @@
 import { json } from "@remix-run/node";
 import { authenticate } from "../shopify.server";
+import db from "../db.server";
 import twilio from "twilio";
-
-// IMPORTANT: We must import db dynamically inside server-only functions
-// to prevent it from being included in the client-side build.
 
 function formatPhoneNumber(phone) {
   if (!phone) return phone;
@@ -14,7 +12,6 @@ function formatPhoneNumber(phone) {
   if (digits.length === 12 && digits.startsWith('92')) {
     return `+${digits}`;
   }
-  // For other international numbers that might already be formatted
   if (!phone.startsWith('+')) {
     return `+${digits}`;
   }
@@ -22,27 +19,42 @@ function formatPhoneNumber(phone) {
 }
 
 export async function action({ request }) {
-  const db = (await import("../db.server")).default;
-
   try {
     const { session, admin } = await authenticate.public.appProxy(request);
     const { cartItems, customer, shippingInfo, otp } = await request.json();
 
     const ipAddress = request.headers.get("x-forwarded-for")?.split(',')[0];
-
     if (!ipAddress) {
       return json({ success: false, error: "Could not verify request source." }, { status: 400 });
     }
 
-    const isBlocked = await db.blockedIp.findUnique({
-      where: { shop_ip: { shop: session.shop, ipAddress } },
-    });
-
+    const isBlocked = await db.blockedIp.findUnique({ where: { shop_ip: { shop: session.shop, ipAddress } } });
     if (isBlocked) {
       return json({ success: false, error: "Your request has been blocked." }, { status: 403 });
     }
 
     const settings = await db.appSettings.findUnique({ where: { shop: session.shop } });
+
+    if (settings?.autoIpBlockingEnabled) {
+      const timeFrame = settings.ipBlockTimeFrame || 5;
+      const attemptLimit = settings.ipBlockAttemptLimit || 3;
+      const timeAgo = new Date(Date.now() - timeFrame * 60000);
+
+      await db.ipOrderLog.create({
+        data: { shop: session.shop, ipAddress }
+      });
+
+      const recentAttempts = await db.ipOrderLog.count({
+        where: { shop: session.shop, ipAddress, createdAt: { gte: timeAgo } },
+      });
+
+      if (recentAttempts > attemptLimit) {
+        await db.blockedIp.create({
+          data: { shop: session.shop, ipAddress }
+        });
+        return json({ success: false, error: "Your IP has been blocked due to suspicious activity." }, { status: 429 });
+      }
+    }
 
     if (settings?.orderSpamProtectionEnabled) {
       const timeLimit = settings.orderSpamTimeLimit || 5;

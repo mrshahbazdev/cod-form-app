@@ -11,8 +11,9 @@ import {
   TextField,
   Button,
   Divider,
-  Frame, // NAYA IMPORT
-  Toast, // NAYA IMPORT
+  InlineStack,
+  Frame,
+  Toast,
 } from "@shopify/polaris";
 import { authenticate } from "../shopify.server";
 import db from "../db.server";
@@ -29,12 +30,15 @@ export async function action({ request }) {
 
   const settingsData = {
     otpEnabled: formData.get("otpEnabled") === "true",
+    orderSpamProtectionEnabled: formData.get("orderSpamProtectionEnabled") === "true",
+    orderSpamTimeLimit: parseInt(formData.get("orderSpamTimeLimit")) || 5,
+    autoIpBlockingEnabled: formData.get("autoIpBlockingEnabled") === "true",
+    ipBlockAttemptLimit: parseInt(formData.get("ipBlockAttemptLimit")) || 3,
+    ipBlockTimeFrame: parseInt(formData.get("ipBlockTimeFrame")) || 5,
     twilioAccountSid: formData.get("twilioAccountSid"),
     twilioAuthToken: formData.get("twilioAuthToken"),
     twilioPhoneNumber: formData.get("twilioPhoneNumber"),
     twilioVerifySid: formData.get("twilioVerifySid"),
-    orderSpamProtectionEnabled: formData.get("orderSpamProtectionEnabled") === "true",
-    orderSpamTimeLimit: parseInt(formData.get("orderSpamTimeLimit")) || 5,
   };
 
   await db.appSettings.upsert({
@@ -53,19 +57,20 @@ export default function AppSettingsPage() {
 
   const [formState, setFormState] = useState({
     otpEnabled: settings.otpEnabled || false,
+    orderSpamProtectionEnabled: settings.orderSpamProtectionEnabled || false,
+    orderSpamTimeLimit: settings.orderSpamTimeLimit || 5,
+    autoIpBlockingEnabled: settings.autoIpBlockingEnabled || false,
+    ipBlockAttemptLimit: settings.ipBlockAttemptLimit || 3,
+    ipBlockTimeFrame: settings.ipBlockTimeFrame || 5,
     twilioAccountSid: settings.twilioAccountSid || '',
     twilioAuthToken: settings.twilioAuthToken || '',
     twilioPhoneNumber: settings.twilioPhoneNumber || '',
     twilioVerifySid: settings.twilioVerifySid || '',
-    orderSpamProtectionEnabled: settings.orderSpamProtectionEnabled || false,
-    orderSpamTimeLimit: settings.orderSpamTimeLimit || 5,
   });
 
-  // NAYI FUNCTIONALITY: Toast ke liye state
   const [toastActive, setToastActive] = useState(false);
   const toggleToastActive = useCallback(() => setToastActive((active) => !active), []);
 
-  // Jab form kamyabi se submit ho, to toast dikhayein
   useEffect(() => {
     if (actionData?.success) {
       setToastActive(true);
@@ -77,6 +82,7 @@ export default function AppSettingsPage() {
   }, []);
 
   const handleFormSubmit = (event) => {
+    event.preventDefault();
     const formData = new FormData(event.currentTarget);
     submit(formData, { method: "post", replace: true });
   };
@@ -105,7 +111,7 @@ export default function AppSettingsPage() {
                   />
 
                   <Checkbox
-                    label="Enable Order Spam Protection"
+                    label="Enable Order Spam Protection (by Phone Number)"
                     name="orderSpamProtectionEnabled"
                     value="true"
                     checked={formState.orderSpamProtectionEnabled}
@@ -117,17 +123,45 @@ export default function AppSettingsPage() {
                     type="number"
                     value={formState.orderSpamTimeLimit}
                     onChange={(value) => handleFormChange('orderSpamTimeLimit', value)}
-                    helpText="A customer cannot place another order from the same phone number within this time."
                     autoComplete="off"
                   />
+
+                  <Divider />
+
+                  <Text as="h2" variant="headingMd">Auto IP Blocking</Text>
+                  <Checkbox
+                    label="Enable Automatic IP Blocking"
+                    name="autoIpBlockingEnabled"
+                    value="true"
+                    checked={formState.autoIpBlockingEnabled}
+                    onChange={(checked) => handleFormChange('autoIpBlockingEnabled', checked)}
+                  />
+                  <InlineStack gap="400">
+                    <TextField
+                      label="Block IP after"
+                      name="ipBlockAttemptLimit"
+                      type="number"
+                      value={formState.ipBlockAttemptLimit}
+                      onChange={(value) => handleFormChange('ipBlockAttemptLimit', value)}
+                      autoComplete="off"
+                    />
+                    <TextField
+                      label="attempts within (minutes)"
+                      name="ipBlockTimeFrame"
+                      type="number"
+                      value={formState.ipBlockTimeFrame}
+                      onChange={(value) => handleFormChange('ipBlockTimeFrame', value)}
+                      autoComplete="off"
+                    />
+                  </InlineStack>
 
                   <Divider />
 
                   <Text as="h2" variant="headingMd">Twilio API Settings</Text>
                   <TextField label="Twilio Account SID" name="twilioAccountSid" value={formState.twilioAccountSid} onChange={(value) => handleFormChange('twilioAccountSid', value)} autoComplete="off" />
                   <TextField label="Twilio Auth Token" name="twilioAuthToken" type="password" value={formState.twilioAuthToken} onChange={(value) => handleFormChange('twilioAuthToken', value)} autoComplete="off" />
-                  <TextField label="Twilio Phone Number" name="twilioPhoneNumber" helpText="Your Twilio number (e.g., +1234567890)" value={formState.twilioPhoneNumber} onChange={(value) => handleFormChange('twilioPhoneNumber', value)} autoComplete="off" />
-                  <TextField label="Twilio Verify Service SID" name="twilioVerifySid" helpText="Your Twilio Verify Service SID (starts with VA...)" value={formState.twilioVerifySid} onChange={(value) => handleFormChange('twilioVerifySid', value)} autoComplete="off" />
+                  <TextField label="Twilio Phone Number" name="twilioPhoneNumber" value={formState.twilioPhoneNumber} onChange={(value) => handleFormChange('twilioPhoneNumber', value)} autoComplete="off" />
+                  <TextField label="Twilio Verify Service SID" name="twilioVerifySid" value={formState.twilioVerifySid} onChange={(value) => handleFormChange('twilioVerifySid', value)} autoComplete="off" />
 
                   <Button submit variant="primary">Save Settings</Button>
                 </BlockStack>

@@ -53,9 +53,13 @@ model AppSettings {
   twilioPhoneNumber          String?
   twilioVerifySid            String?
 
-  // NAYI FIELDS SPAM PROTECTION KE LIYE:
   orderSpamProtectionEnabled Boolean  @default(false)
-  orderSpamTimeLimit         Int?     @default(5) // Minutes
+  orderSpamTimeLimit         Int?     @default(5)
+
+  // NAYI FIELDS AUTO IP BLOCKING KE LIYE:
+  autoIpBlockingEnabled      Boolean  @default(false)
+  ipBlockAttemptLimit        Int?     @default(3) // Kitne attempts ke baad block karna hai
+  ipBlockTimeFrame           Int?     @default(5) // Kitne minute ke andar
 }
 
 model OrderLog {
@@ -67,7 +71,6 @@ model OrderLog {
   @@index([shop, phone])
 }
 
-// NAYI TABLE IP BLOCKING KE LIYE:
 model BlockedIp {
   id        Int      @id @default(autoincrement())
   shop      String
@@ -75,4 +78,14 @@ model BlockedIp {
   createdAt DateTime @default(now())
 
   @@unique([shop, ipAddress], name: "shop_ip")
+}
+
+// NAYI TABLE IP ATTEMPTS KO LOG KARNE KE LIYE:
+model IpOrderLog {
+  id        Int      @id @default(autoincrement())
+  shop      String
+  ipAddress String
+  createdAt DateTime @default(now())
+
+  @@index([shop, ipAddress])
 }
