@@ -44,13 +44,17 @@ model ShippingRate {
 
 
 model AppSettings {
-  id                Int      @id @default(autoincrement())
-  shop              String   @unique
-  otpEnabled        Boolean  @default(false)
+  id                         Int      @id @default(autoincrement())
+  shop                       String   @unique
+  otpEnabled                 Boolean  @default(false)
 
-  twilioAccountSid  String?
-  twilioAuthToken   String?
-  twilioPhoneNumber String?
-  twilioVerifySid   String? // NAYI FIELD
+  twilioAccountSid           String?
+  twilioAuthToken            String?
+  twilioPhoneNumber          String?
+  twilioVerifySid            String?
+
+  // NAYI FIELDS SPAM PROTECTION KE LIYE:
+  orderSpamProtectionEnabled Boolean  @default(false)
+  orderSpamTimeLimit         Int?     @default(5) // Minutes
 }
 
