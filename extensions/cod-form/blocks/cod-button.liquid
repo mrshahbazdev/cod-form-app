@@ -310,13 +310,22 @@ document.addEventListener('DOMContentLoaded', () => {
       country: formData.get('country')
     };
 
+    const selectedCountry = customerDetails.country;
+    const selectedCity = customerDetails.city.toLowerCase();
+    const countryInfo = locationData[selectedCountry];
+    let shippingInfo = countryInfo?.rates['default'] || { rate: {{ block.settings.default_shipping_rate }}, currency: 'PKR' };
+    if (countryInfo?.rates[selectedCity]) {
+      shippingInfo = countryInfo.rates[selectedCity];
+    }
+
     try {
       const backendResponse = await fetch('/apps/cod-proxy/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           cartItems: cart.items,
-          customer: customerDetails
+          customer: customerDetails,
+          shippingInfo: shippingInfo
         }),
       });
 
