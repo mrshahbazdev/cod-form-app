@@ -1,11 +1,9 @@
 import { json } from "@remix-run/node";
 import { authenticate } from "../shopify.server";
-// NAYI TABDEELI: Humne yahan se 'db' ka import hata diya hai
+import db from "../db.server";
 
 export async function action({ request }) {
-  // NAYI TABDEELI: 'db' ko yahan function ke andar import karein
-  const db = (await import("../db.server")).default;
-
+  console.log("--- PROXY ACTION V6 (with OTP logic) STARTED ---");
   try {
     const { session, admin } = await authenticate.public.appProxy(request);
 
@@ -13,10 +11,28 @@ export async function action({ request }) {
       return json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    const { cartItems, customer, shippingInfo } = await request.json();
+    const { cartItems, customer, shippingInfo, otp } = await request.json();
 
     if (!cartItems || !customer || !shippingInfo) {
       return json({ success: false, error: "Missing required data." }, { status: 400 });
+    }
+
+    const settings = await db.appSettings.findUnique({ where: { shop: session.shop } });
+
+    if (settings?.otpEnabled) {
+      if (!otp) {
+        return json({ success: false, error: "OTP is required for this order." }, { status: 400 });
+      }
+
+      const fiveMinutesAgo = new Date(Date.now() - 300000); // 5 minutes validity
+      const validOtp = await db.otpLog.findFirst({
+        where: { shop: session.shop, phone: customer.phone, otp, createdAt: { gte: fiveMinutesAgo } },
+        orderBy: { createdAt: 'desc' }
+      });
+
+      if (!validOtp) {
+        return json({ success: false, error: "Invalid or expired OTP provided." }, { status: 400 });
+      }
     }
 
     const lineItems = cartItems.map(item => ({
@@ -43,7 +59,8 @@ export async function action({ request }) {
           input: {
             lineItems: lineItems,
             customAttributes: [
-              { key: "Payment Method", value: "Cash on Delivery" }
+              { key: "Payment Method", value: "Cash on Delivery" },
+              { key: "OTP Verified", value: settings?.otpEnabled ? "Yes" : "No" }
             ],
             shippingAddress: {
               address1: customer.address,
@@ -120,7 +137,6 @@ export async function action({ request }) {
     }
   } catch (error) {
     console.error("Error creating order:", error);
-    // Return a JSON response even on error
     return json({ success: false, error: error.message }, { status: 500 });
   }
 }

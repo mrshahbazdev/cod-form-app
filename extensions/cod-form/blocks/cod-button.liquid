@@ -1,9 +1,3 @@
-{% comment %}
-  This file creates a popup modal (form) and a button to open it.
-  It fetches locations and rates from the database, auto-detects the user's country via IP,
-  and allows quantity changes and item removal directly from the cart summary.
-{% endcomment %}
-
 <style>
   .cod-modal-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -97,7 +91,7 @@
 
       {% if block.settings.show_city_field %}
         <div class="cod-form-field">
-          <label for="cod-city-{{ section.id }}-{{ block.id }}" style="color: {{ block.settings.form_label_color }};">Provinces *</label>
+          <label for="cod-city-{{ section.id }}-{{ block.id }}" style="color: {{ block.settings.form_label_color }};">City *</label>
           <select id="cod-city-{{ section.id }}-{{ block.id }}" name="city" required></select>
         </div>
       {% endif %}
@@ -139,7 +133,6 @@ document.addEventListener('DOMContentLoaded', () => {
       currentCart = await res.json();
       updateCartSummary();
 
-      // NAYI TABDEELI: Cart icon ko update karein
       const cartCountElements = document.querySelectorAll('.cart-count-bubble, .site-header__cart-count, [data-cart-count]');
       cartCountElements.forEach(el => {
         el.textContent = currentCart.item_count;
@@ -231,7 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const updateCities = () => {
     const selectedCountry = countrySelect.value;
-    citySelect.innerHTML = '<option value="">Select Provinces</option>';
+    citySelect.innerHTML = '<option value="">Select City</option>';
     if (locationData[selectedCountry] && locationData[selectedCountry].cities) {
       locationData[selectedCountry].cities.forEach(city => {
         const option = document.createElement('option');
