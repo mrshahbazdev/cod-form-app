@@ -5,8 +5,7 @@ import {
   BlockStack,
   Text,
   List,
-  Code,
-  Button, // NAYA IMPORT
+  Button,
 } from "@shopify/polaris";
 
 const GsheetCode = `function doPost(e) {
@@ -59,13 +58,14 @@ export default function GoogleSheetsGuidePage() {
                   In the first row (Row 1) of your new sheet, copy and paste these exact column headers in this order:
                   <Card>
                     <BlockStack gap="200">
-                      <Text as="p" fontWeight="bold">
-                        <Code>Timestamp</Code> <Code>Order ID</Code> <Code>Customer Name</Code> <Code>Phone</Code> <Code>Address</Code> <Code>City</Code> <Code>Country</Code> <Code>Products</Code> <Code>Total Amount</Code>
-                      </Text>
-                      {/* NAYI TABDEELI: Copy button add kiya gaya hai */}
-                      <Button onClick={() => navigator.clipboard.writeText(sheetHeaders)}>
-                        Copy Headers
-                      </Button>
+                      <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', background: '#f4f6f8', padding: '1rem', borderRadius: 'var(--p-border-radius-200)' }}>
+                        <code>{sheetHeaders}</code>
+                      </pre>
+                      <div style={{width: 'fit-content'}}>
+                        <Button onClick={() => navigator.clipboard.writeText(sheetHeaders)}>
+                          Copy Headers
+                        </Button>
+                      </div>
                     </BlockStack>
                   </Card>
                 </List.Item>
@@ -76,12 +76,14 @@ export default function GoogleSheetsGuidePage() {
                   Delete any existing code in the script editor and paste the following code:
                   <Card>
                     <BlockStack gap="200">
-                      <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+                      <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', background: '#f4f6f8', padding: '1rem', borderRadius: 'var(--p-border-radius-200)' }}>
                         <code>{GsheetCode}</code>
                       </pre>
-                      <Button onClick={() => navigator.clipboard.writeText(GsheetCode)}>
-                        Copy Code
-                      </Button>
+                      <div style={{width: 'fit-content'}}>
+                        <Button onClick={() => navigator.clipboard.writeText(GsheetCode)}>
+                          Copy Code
+                        </Button>
+                      </div>
                     </BlockStack>
                   </Card>
                 </List.Item>
