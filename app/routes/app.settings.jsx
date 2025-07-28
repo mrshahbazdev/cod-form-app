@@ -40,6 +40,11 @@ export async function action({ request }) {
     twilioPhoneNumber: formData.get("twilioPhoneNumber"),
     twilioVerifySid: formData.get("twilioVerifySid"),
     googleSheetUrl: formData.get("googleSheetUrl"),
+    // NAYI FIELDS
+    facebookPixelId: formData.get("facebookPixelId"),
+    tiktokPixelId: formData.get("tiktokPixelId"),
+    snapchatPixelId: formData.get("snapchatPixelId"),
+    googleAnalyticsId: formData.get("googleAnalyticsId"),
   };
 
   await db.appSettings.upsert({
@@ -68,6 +73,11 @@ export default function AppSettingsPage() {
     twilioPhoneNumber: settings.twilioPhoneNumber || '',
     twilioVerifySid: settings.twilioVerifySid || '',
     googleSheetUrl: settings.googleSheetUrl || '',
+    // NAYI FIELDS
+    facebookPixelId: settings.facebookPixelId || '',
+    tiktokPixelId: settings.tiktokPixelId || '',
+    snapchatPixelId: settings.snapchatPixelId || '',
+    googleAnalyticsId: settings.googleAnalyticsId || '',
   });
 
   const [toastActive, setToastActive] = useState(false);
@@ -103,7 +113,6 @@ export default function AppSettingsPage() {
               <Form onSubmit={handleFormSubmit} method="post">
                 <BlockStack gap="500">
                   <Text as="h2" variant="headingMd">Fraud Prevention</Text>
-
                   <Checkbox
                     label="Enable OTP verification for orders"
                     name="otpEnabled"
@@ -111,7 +120,6 @@ export default function AppSettingsPage() {
                     checked={formState.otpEnabled}
                     onChange={(checked) => handleFormChange('otpEnabled', checked)}
                   />
-
                   <Checkbox
                     label="Enable Order Spam Protection (by Phone Number)"
                     name="orderSpamProtectionEnabled"
@@ -176,6 +184,14 @@ export default function AppSettingsPage() {
                     helpText="Enter the Web App URL from your Google Apps Script."
                     autoComplete="off"
                   />
+
+                  <Divider />
+
+                  <Text as="h2" variant="headingMd">Tracking Pixels</Text>
+                  <TextField label="Facebook Pixel ID" name="facebookPixelId" value={formState.facebookPixelId} onChange={(value) => handleFormChange('facebookPixelId', value)} autoComplete="off" />
+                  <TextField label="TikTok Pixel ID" name="tiktokPixelId" value={formState.tiktokPixelId} onChange={(value) => handleFormChange('tiktokPixelId', value)} autoComplete="off" />
+                  <TextField label="Snapchat Pixel ID" name="snapchatPixelId" value={formState.snapchatPixelId} onChange={(value) => handleFormChange('snapchatPixelId', value)} autoComplete="off" />
+                  <TextField label="Google Analytics ID (GA4)" name="googleAnalyticsId" value={formState.googleAnalyticsId} onChange={(value) => handleFormChange('googleAnalyticsId', value)} autoComplete="off" />
 
                   <Button submit variant="primary">Save Settings</Button>
                 </BlockStack>

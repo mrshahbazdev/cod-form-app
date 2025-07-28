@@ -55,11 +55,18 @@ model AppSettings {
 
   orderSpamProtectionEnabled Boolean  @default(false)
   orderSpamTimeLimit         Int?     @default(5)
-  googleSheetUrl             String?
-  // NAYI FIELDS AUTO IP BLOCKING KE LIYE:
+
   autoIpBlockingEnabled      Boolean  @default(false)
-  ipBlockAttemptLimit        Int?     @default(3) // Kitne attempts ke baad block karna hai
-  ipBlockTimeFrame           Int?     @default(5) // Kitne minute ke andar
+  ipBlockAttemptLimit        Int?     @default(3)
+  ipBlockTimeFrame           Int?     @default(5)
+
+  googleSheetUrl             String?
+
+  // NAYI FIELDS PIXEL TRACKING KE LIYE:
+  facebookPixelId            String?
+  tiktokPixelId              String?
+  snapchatPixelId            String?
+  googleAnalyticsId          String? // For GA4
 }
 
 model OrderLog {
