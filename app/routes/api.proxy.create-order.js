@@ -3,121 +3,124 @@ import { authenticate } from "../shopify.server";
 import db from "../db.server";
 
 export async function action({ request }) {
-  try {
-    const { session, admin } = await authenticate.public.appProxy(request);
+  const { session, admin } = await authenticate.public.appProxy(request);
+  const { cartItems, customer } = await request.json();
 
-    if (!session) {
-      return json({ success: false, error: "Unauthorized" }, { status: 401 });
-    }
+  if (!cartItems || !customer) {
+    return json({ success: false, error: "Missing cart or customer data." }, { status: 400 });
+  }
 
-    const { cartItems, customer, shippingInfo } = await request.json();
+  const ratesFromDb = await db.shippingRate.findMany({ where: { shop: session.shop } });
+  const rates = {};
+  ratesFromDb.forEach(rate => {
+    // country-city key for specific rates, country- key for default rates
+    const key = `${rate.country}-${rate.city || ''}`.toLowerCase();
+    rates[key] = { rate: rate.rate, currency: rate.currency };
+  });
 
-    if (!cartItems || !customer || !shippingInfo) {
-      return json({ success: false, error: "Missing required data." }, { status: 400 });
-    }
+  const cityKey = `${customer.country}-${customer.city}`.toLowerCase();
+  const countryKey = `${customer.country}-`.toLowerCase();
 
-    const lineItems = cartItems.map(item => ({
-      variantId: `gid://shopify/ProductVariant/${item.variant_id}`,
-      quantity: item.quantity,
-    }));
+  // Find the most specific rate available, or fall back to a hardcoded default
+  const shippingInfo = rates[cityKey] || rates[countryKey] || { rate: 250.00, currency: "PKR" };
 
-    const nameParts = customer.name.split(' ');
-    const firstName = nameParts[0] || 'Guest';
-    const lastName = nameParts.slice(1).join(' ') || 'User';
+  const lineItems = cartItems.map(item => ({
+    variantId: `gid://shopify/ProductVariant/${item.variant_id}`,
+    quantity: item.quantity,
+  }));
 
-    const createDraftOrderMutation = `
-      mutation draftOrderCreate($input: DraftOrderInput!) {
-        draftOrderCreate(input: $input) {
-          draftOrder { id }
-          userErrors { field, message }
-        }
-      }`;
+  const nameParts = customer.name.split(' ');
+  const firstName = nameParts[0] || 'Guest';
+  const lastName = nameParts.slice(1).join(' ') || 'User';
 
-    const draftOrderResponse = await admin.graphql(
-      createDraftOrderMutation,
-      {
-        variables: {
-          input: {
-            lineItems: lineItems,
-            customAttributes: [
-              { key: "Payment Method", value: "Cash on Delivery" }
-            ],
-            shippingAddress: {
-              address1: customer.address,
-              city: customer.city,
-              province: customer.province,
-              phone: customer.phone,
-              country: customer.country,
-              firstName: firstName,
-              lastName: lastName,
-            },
-            email: customer.email || `${customer.phone}@example.com`,
-            tags: ["COD", "App Order"],
-            presentmentCurrencyCode: shippingInfo.currency,
-            shippingLine: {
-              price: shippingInfo.rate.toFixed(2),
-              title: "Standard Shipping"
-            },
+  const createDraftOrderMutation = `
+    mutation draftOrderCreate($input: DraftOrderInput!) {
+      draftOrderCreate(input: $input) {
+        draftOrder { id }
+        userErrors { field, message }
+      }
+    }`;
+
+  const draftOrderResponse = await admin.graphql(
+    createDraftOrderMutation,
+    {
+      variables: {
+        input: {
+          lineItems: lineItems,
+          customAttributes: [
+            { key: "Payment Method", value: "Cash on Delivery" }
+          ],
+          shippingAddress: {
+            address1: customer.address,
+            city: customer.city,
+            province: customer.province,
+            phone: customer.phone,
+            country: customer.country, // Use the country from the form
+            firstName: firstName,
+            lastName: lastName,
+          },
+          email: customer.email || `${customer.phone}@example.com`,
+          tags: ["COD", "App Order"],
+          presentmentCurrencyCode: shippingInfo.currency,
+          shippingLine: {
+            price: shippingInfo.rate.toFixed(2),
+            title: "Standard Shipping"
           },
         },
-      }
-    );
-
-    const draftOrderResponseJson = await draftOrderResponse.json();
-    const draftOrderData = draftOrderResponseJson.data.draftOrderCreate;
-
-    if (draftOrderData.userErrors.length > 0) {
-      throw new Error(draftOrderData.userErrors.map(e => e.message).join(', '));
+      },
     }
+  );
 
-    const draftOrderId = draftOrderData.draftOrder.id;
+  const draftOrderResponseJson = await draftOrderResponse.json();
+  const draftOrderData = draftOrderResponseJson.data.draftOrderCreate;
 
-    const completeDraftOrderMutation = `
-        mutation draftOrderComplete($id: ID!) {
-            draftOrderComplete(id: $id) {
-                draftOrder {
-                    order {
-                        id
-                        legacyResourceId
-                    }
-                }
-                userErrors {
-                    field
-                    message
-                }
-            }
-        }`;
+  if (draftOrderData.userErrors.length > 0) {
+    throw new Error(draftOrderData.userErrors.map(e => e.message).join(', '));
+  }
 
-    const completeOrderResponse = await admin.graphql(
-      completeDraftOrderMutation,
-      {
-        variables: { id: draftOrderId }
-      }
-    );
+  const draftOrderId = draftOrderData.draftOrder.id;
 
-    const completeOrderResponseJson = await completeOrderResponse.json();
-    const orderData = completeOrderResponseJson.data.draftOrderComplete;
+  const completeDraftOrderMutation = `
+      mutation draftOrderComplete($id: ID!) {
+          draftOrderComplete(id: $id) {
+              draftOrder {
+                  order {
+                      id
+                      legacyResourceId
+                  }
+              }
+              userErrors {
+                  field
+                  message
+              }
+          }
+      }`;
 
-    if (orderData.userErrors.length > 0) {
-      throw new Error(orderData.userErrors.map(e => e.message).join(', '));
+  const completeOrderResponse = await admin.graphql(
+    completeDraftOrderMutation,
+    {
+      variables: { id: draftOrderId }
     }
+  );
 
-    const finalOrder = orderData.draftOrder.order;
+  const completeOrderResponseJson = await completeOrderResponse.json();
+  const orderData = completeOrderResponseJson.data.draftOrderComplete;
 
-    if (finalOrder) {
-      return json({
-        success: true,
-        orderId: finalOrder.legacyResourceId,
-      });
-    } else {
-      return json({
-        success: true,
-        orderId: null,
-      });
-    }
-  } catch (error) {
-    console.error("Error creating order:", error);
-    // Return a JSON response even on error
-    return json({ success: false, error: error.message }, { status: 500 });
+  if (orderData.userErrors.length > 0) {
+    throw new Error(orderData.userErrors.map(e => e.message).join(', '));
+  }
+
+  const finalOrder = orderData.draftOrder.order;
+
+  if (finalOrder) {
+    return json({
+      success: true,
+      orderId: finalOrder.legacyResourceId,
+    });
+  } else {
+    return json({
+      success: true,
+      orderId: null,
+    });
   }
 }
