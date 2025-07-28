@@ -20,6 +20,7 @@ export async function action({ request }) {
     twilioAccountSid: formData.get("twilioAccountSid"),
     twilioAuthToken: formData.get("twilioAuthToken"),
     twilioPhoneNumber: formData.get("twilioPhoneNumber"),
+    twilioVerifySid: formData.get("twilioVerifySid"), // NAYI FIELD
   };
 
   await db.appSettings.upsert({
@@ -35,12 +36,12 @@ export default function AppSettingsPage() {
   const { settings } = useLoaderData();
   const submit = useSubmit();
 
-  // NAYI TABDEELI: Form fields ke liye state banayein
   const [formState, setFormState] = useState({
     otpEnabled: settings.otpEnabled || false,
     twilioAccountSid: settings.twilioAccountSid || '',
     twilioAuthToken: settings.twilioAuthToken || '',
     twilioPhoneNumber: settings.twilioPhoneNumber || '',
+    twilioVerifySid: settings.twilioVerifySid || '', // NAYI FIELD
   });
 
   const handleFormChange = useCallback((key, value) => {
@@ -68,33 +69,11 @@ export default function AppSettingsPage() {
                   checked={formState.otpEnabled}
                   onChange={(checked) => handleFormChange('otpEnabled', checked)}
                 />
-                <Text variant="bodyMd" as="p" color="subdued">
-                  If enabled, customers will have to verify their phone number with an OTP.
-                </Text>
 
-                <TextField
-                  label="Twilio Account SID"
-                  name="twilioAccountSid"
-                  value={formState.twilioAccountSid}
-                  onChange={(value) => handleFormChange('twilioAccountSid', value)}
-                  autoComplete="off"
-                />
-                <TextField
-                  label="Twilio Auth Token"
-                  name="twilioAuthToken"
-                  type="password"
-                  value={formState.twilioAuthToken}
-                  onChange={(value) => handleFormChange('twilioAuthToken', value)}
-                  autoComplete="off"
-                />
-                <TextField
-                  label="Twilio Phone Number"
-                  name="twilioPhoneNumber"
-                  helpText="Enter your Twilio phone number with country code, e.g., +1234567890"
-                  value={formState.twilioPhoneNumber}
-                  onChange={(value) => handleFormChange('twilioPhoneNumber', value)}
-                  autoComplete="off"
-                />
+                <TextField label="Twilio Account SID" name="twilioAccountSid" value={formState.twilioAccountSid} onChange={(value) => handleFormChange('twilioAccountSid', value)} autoComplete="off" />
+                <TextField label="Twilio Auth Token" name="twilioAuthToken" type="password" value={formState.twilioAuthToken} onChange={(value) => handleFormChange('twilioAuthToken', value)} autoComplete="off" />
+                <TextField label="Twilio Phone Number" name="twilioPhoneNumber" helpText="Your Twilio number (e.g., +1234567890)" value={formState.twilioPhoneNumber} onChange={(value) => handleFormChange('twilioPhoneNumber', value)} autoComplete="off" />
+                <TextField label="Twilio Verify Service SID" name="twilioVerifySid" helpText="Your Twilio Verify Service SID (starts with VA...)" value={formState.twilioVerifySid} onChange={(value) => handleFormChange('twilioVerifySid', value)} autoComplete="off" />
 
                 <Button submit variant="primary">Save Settings</Button>
               </BlockStack>
