@@ -1,5 +1,4 @@
-<div id="pixel-scripts-container-{{ section.id }}-{{ block.id }}">
-</div>
+<div id="pixel-scripts-container-{{ section.id }}-{{ block.id }}"></div>
 
 <style>
   .cod-modal-overlay {
@@ -39,6 +38,7 @@
   .cod-price-details { margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px; }
   .cod-price-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
   .cod-price-row.total { font-weight: bold; font-size: 1.1em; }
+  .cod-price-row.discount { color: green; }
   .cod-quantity-selector { display: flex; align-items: center; margin-top: 5px; }
   .cod-quantity-btn { width: 25px; height: 25px; border: 1px solid #ccc; background-color: #f9f9f9; cursor: pointer; }
   .cod-quantity-input { width: 40px; text-align: center; border: 1px solid #ccc; border-left: none; border-right: none; height: 25px; }
@@ -138,6 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let isOtpEnabled = false;
   let pixelIds = {};
   let currentProduct = {{ product | json }};
+  let quantityOffers = [];
 
   const loadPixelScripts = () => {
     let scriptsHtml = '';
@@ -211,9 +212,26 @@ document.addEventListener('DOMContentLoaded', () => {
   const updateCartSummary = () => {
     if (!currentCart) return;
 
+    let totalDiscount = 0;
     cartSummaryContainer.innerHTML = '';
 
     currentCart.items.forEach((item, index) => {
+      const productId = item.product_id.toString();
+      const applicableOffers = quantityOffers
+        .filter(o => o.productId === productId && item.quantity >= o.quantity)
+        .sort((a, b) => b.quantity - a.quantity);
+
+      let itemDiscount = 0;
+      if (applicableOffers.length > 0) {
+        const bestOffer = applicableOffers[0];
+        if (bestOffer.discountType === 'PERCENTAGE') {
+          itemDiscount = (item.final_line_price * bestOffer.discountValue) / 100;
+        } else {
+          itemDiscount = bestOffer.discountValue * 100;
+        }
+        totalDiscount += itemDiscount;
+      }
+
       const line = index + 1;
       const itemHtml = `
         <div class="cod-cart-item">
@@ -246,13 +264,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const subtotal = currentCart.total_price;
-    const total = subtotal + (shippingInfo.rate * 100);
+    const total = subtotal - totalDiscount + (shippingInfo.rate * 100);
 
     const priceDetailsHtml = `
       <div class="cod-price-details">
         <div class="cod-price-row">
           <span>Subtotal</span>
           <span>${shippingInfo.currency} ${(subtotal / 100).toFixed(2)}</span>
+        </div>
+        <div class="cod-price-row discount">
+          <span>Discount</span>
+          <span>- ${shippingInfo.currency} ${(totalDiscount / 100).toFixed(2)}</span>
         </div>
         <div class="cod-price-row">
           <span>Shipping</span>
@@ -364,6 +386,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const updatedCartResponse = await fetch('/cart.js');
       currentCart = await updatedCartResponse.json();
+
+      const productIdsInCart = currentCart.items.map(item => item.product_id.toString());
+      const offersResponse = await fetch('/apps/cod-proxy/get-offers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productIds: productIdsInCart })
+      });
+      const { offers } = await offersResponse.json();
+      quantityOffers = offers;
 
       updateCartSummary();
 

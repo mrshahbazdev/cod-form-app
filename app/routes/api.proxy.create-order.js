@@ -1,7 +1,9 @@
 import { json } from "@remix-run/node";
 import { authenticate } from "../shopify.server";
-import db from "../db.server";
 import twilio from "twilio";
+
+// IMPORTANT: We must import db dynamically inside server-only functions
+// to prevent it from being included in the client-side build.
 
 function formatPhoneNumber(phone) {
   if (!phone) return phone;
@@ -19,6 +21,8 @@ function formatPhoneNumber(phone) {
 }
 
 export async function action({ request }) {
+  const db = (await import("../db.server")).default;
+
   try {
     const { session, admin } = await authenticate.public.appProxy(request);
     const { cartItems, customer, shippingInfo, otp } = await request.json();
@@ -28,7 +32,10 @@ export async function action({ request }) {
       return json({ success: false, error: "Could not verify request source." }, { status: 400 });
     }
 
-    const isBlocked = await db.blockedIp.findUnique({ where: { shop_ip: { shop: session.shop, ipAddress } } });
+    const isBlocked = await db.blockedIp.findUnique({
+      where: { shop_ip: { shop: session.shop, ipAddress } },
+    });
+
     if (isBlocked) {
       return json({ success: false, error: "Your request has been blocked." }, { status: 403 });
     }
@@ -87,6 +94,27 @@ export async function action({ request }) {
       }
     }
 
+    const productIds = cartItems.map(item => item.product_id.toString());
+    const offers = await db.quantityOffer.findMany({
+      where: { shop: session.shop, productId: { in: productIds } },
+    });
+
+    let totalDiscount = 0;
+    cartItems.forEach(item => {
+      const applicableOffers = offers
+        .filter(o => o.productId === item.product_id.toString() && item.quantity >= o.quantity)
+        .sort((a, b) => b.quantity - a.quantity);
+
+      if (applicableOffers.length > 0) {
+        const bestOffer = applicableOffers[0];
+        if (bestOffer.discountType === 'PERCENTAGE') {
+          totalDiscount += (item.final_line_price * bestOffer.discountValue) / 100;
+        } else {
+          totalDiscount += bestOffer.discountValue * 100;
+        }
+      }
+    });
+
     const lineItems = cartItems.map(item => ({
       variantId: `gid://shopify/ProductVariant/${item.variant_id}`,
       quantity: item.quantity,
@@ -129,6 +157,11 @@ export async function action({ request }) {
             shippingLine: {
               price: shippingInfo.rate.toFixed(2),
               title: "Standard Shipping"
+            },
+            appliedDiscount: {
+              value: (totalDiscount / 100).toFixed(2),
+              valueType: "FIXED_AMOUNT",
+              title: "Quantity Discount"
             },
           },
         },
@@ -186,7 +219,7 @@ export async function action({ request }) {
       if (settings?.googleSheetUrl) {
         try {
           const productTitles = cartItems.map(item => `${item.quantity}x ${item.title}`);
-          const totalAmount = (cartItems.reduce((sum, item) => sum + item.final_line_price, 0) + (shippingInfo.rate * 100)) / 100;
+          const totalAmount = (cartItems.reduce((sum, item) => sum + item.final_line_price, 0) - totalDiscount + (shippingInfo.rate * 100)) / 100;
 
           const sheetData = {
             orderId: finalOrder.legacyResourceId,
