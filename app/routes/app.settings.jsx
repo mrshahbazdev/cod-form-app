@@ -40,7 +40,6 @@ export async function action({ request }) {
     twilioPhoneNumber: formData.get("twilioPhoneNumber"),
     twilioVerifySid: formData.get("twilioVerifySid"),
     googleSheetUrl: formData.get("googleSheetUrl"),
-    // NAYI FIELDS
     facebookPixelId: formData.get("facebookPixelId"),
     tiktokPixelId: formData.get("tiktokPixelId"),
     snapchatPixelId: formData.get("snapchatPixelId"),
@@ -73,7 +72,6 @@ export default function AppSettingsPage() {
     twilioPhoneNumber: settings.twilioPhoneNumber || '',
     twilioVerifySid: settings.twilioVerifySid || '',
     googleSheetUrl: settings.googleSheetUrl || '',
-    // NAYI FIELDS
     facebookPixelId: settings.facebookPixelId || '',
     tiktokPixelId: settings.tiktokPixelId || '',
     snapchatPixelId: settings.snapchatPixelId || '',
@@ -113,6 +111,7 @@ export default function AppSettingsPage() {
               <Form onSubmit={handleFormSubmit} method="post">
                 <BlockStack gap="500">
                   <Text as="h2" variant="headingMd">Fraud Prevention</Text>
+
                   <Checkbox
                     label="Enable OTP verification for orders"
                     name="otpEnabled"
@@ -120,6 +119,7 @@ export default function AppSettingsPage() {
                     checked={formState.otpEnabled}
                     onChange={(checked) => handleFormChange('otpEnabled', checked)}
                   />
+
                   <Checkbox
                     label="Enable Order Spam Protection (by Phone Number)"
                     name="orderSpamProtectionEnabled"

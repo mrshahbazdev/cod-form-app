@@ -1,3 +1,6 @@
+<div id="pixel-scripts-container-{{ section.id }}-{{ block.id }}">
+</div>
+
 <style>
   .cod-modal-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -128,10 +131,58 @@ document.addEventListener('DOMContentLoaded', () => {
   const otpContainer = document.getElementById('otp-field-container' + uniqueId);
   const shippingContainer = document.getElementById('shipping-details-fields' + uniqueId);
   const phoneInput = document.getElementById('cod-phone' + uniqueId);
+  const pixelScriptsContainer = document.getElementById('pixel-scripts-container' + uniqueId);
 
   let locationData = {};
   let currentCart = null;
   let isOtpEnabled = false;
+  let pixelIds = {};
+  let currentProduct = {{ product | json }};
+
+  const loadPixelScripts = () => {
+    let scriptsHtml = '';
+    if (pixelIds.facebookPixelId) {
+      scriptsHtml += `
+        <script>
+          !function(f,b,e,v,n,t,s)
+          {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+          n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+          if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+          n.queue=[];t=b.createElement(e);t.async=!0;
+          t.src=v;s=b.getElementsByTagName(e)[0];
+          s.parentNode.insertBefore(t,s)}(window, document,'script',
+          'https://connect.facebook.net/en_US/fbevents.js');
+          fbq('init', '${pixelIds.facebookPixelId}');
+          fbq('track', 'PageView');
+        <\/script>
+        <noscript><img height="1" width="1" style="display:none"
+          src="https://www.facebook.com/tr?id=${pixelIds.facebookPixelId}&ev=PageView&noscript=1"
+        /></noscript>
+      `;
+    }
+    if (pixelIds.tiktokPixelId) {
+      scriptsHtml += `
+        <script>
+          !function (w, d, t) {
+            w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie"],ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for(var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e},ttq.load=function(e,n){var i="https://analytics.tiktok.com/i18n/pixel/events.js";ttq._i=ttq._i||{},ttq._i[e]=[],ttq._i[e].pixelId=e,ttq._i[e].analytics=n,ttq._i[e].load=function(){var t=d.createElement("script");t.type="text/javascript",t.async=!0,t.src=i+"?sdkid="+e+"&lib="+t,d.getElementsByTagName("head")[0].appendChild(t)};return ttq._i[e].load(),ttq._i[e]};
+            ttq.load('${pixelIds.tiktokPixelId}');
+            ttq.page();
+          }(window, document, 'ttq');
+        <\/script>
+      `;
+    }
+    pixelScriptsContainer.innerHTML = scriptsHtml;
+  };
+
+  const firePixelEvent = (eventName, eventData = {}) => {
+    console.log(`Firing Pixel Event: ${eventName}`, eventData);
+    if (pixelIds.facebookPixelId && typeof fbq === 'function') {
+      fbq('track', eventName, eventData);
+    }
+    if (pixelIds.tiktokPixelId && typeof ttq === 'function') {
+      ttq.track(eventName, eventData);
+    }
+  };
 
   const updateCart = async (line, quantity) => {
     modal.style.opacity = '0.5';
@@ -257,11 +308,23 @@ document.addEventListener('DOMContentLoaded', () => {
     openBtn.disabled = true;
 
     try {
-      const [settingsRes, locationsRes, ipRes] = await Promise.all([
+      const [pixelsRes, settingsRes, locationsRes, ipRes] = await Promise.all([
+        fetch('/apps/cod-proxy/get-pixels'),
         fetch('/apps/cod-proxy/get-settings'),
         fetch('/apps/cod-proxy/get-locations'),
         fetch('/apps/cod-proxy/get-country-by-ip')
       ]);
+
+      const { pixels } = await pixelsRes.json();
+      pixelIds = pixels;
+      loadPixelScripts();
+
+      firePixelEvent('ViewContent', {
+        content_ids: [currentProduct.id],
+        content_name: currentProduct.title,
+        value: (currentProduct.price / 100).toFixed(2),
+        currency: 'PKR'
+      });
 
       const { otpEnabled } = await settingsRes.json();
       isOtpEnabled = otpEnabled;
@@ -434,6 +497,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const result = await backendResponse.json();
 
       if (result.success) {
+        firePixelEvent('Purchase', {
+          value: (cart.total_price / 100).toFixed(2),
+          currency: shippingInfo.currency,
+          content_ids: cart.items.map(item => item.id),
+          num_items: cart.item_count
+        });
+
         messageDiv.style.color = 'green';
         messageDiv.innerText = 'Order placed successfully! Clearing cart...';
         await fetch('/cart/clear.js', { method: 'POST' });
