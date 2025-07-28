@@ -1,3 +1,9 @@
+{% comment %}
+  This file creates a popup modal (form) and a button to open it.
+  It fetches locations and rates from the database, auto-detects the user's country via IP,
+  and allows quantity changes and item removal directly from the cart summary.
+{% endcomment %}
+
 <style>
   .cod-modal-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -35,6 +41,10 @@
   .cod-price-details { margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px; }
   .cod-price-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
   .cod-price-row.total { font-weight: bold; font-size: 1.1em; }
+  .cod-quantity-selector { display: flex; align-items: center; margin-top: 5px; }
+  .cod-quantity-btn { width: 25px; height: 25px; border: 1px solid #ccc; background-color: #f9f9f9; cursor: pointer; }
+  .cod-quantity-input { width: 40px; text-align: center; border: 1px solid #ccc; border-left: none; border-right: none; height: 25px; }
+  .cod-remove-item { margin-left: auto; background: none; border: none; color: red; cursor: pointer; font-size: 18px; }
 </style>
 
 <div class="card">
@@ -95,7 +105,7 @@
       <div class="cod-form-field">
         <label for="cod-province-{{ section.id }}-{{ block.id }}" style="color: {{ block.settings.form_label_color }};">City *</label>
         <input type="text" id="cod-province-{{ section.id }}-{{ block.id }}" name="province" required>
-    </div>
+      </div>
       <button type="submit" class="cod-submit-btn" style="background-color: {{ block.settings.button_color }}; color: {{ block.settings.text_color }};">COMPLETE ORDER</button>
       <div id="cod-form-message-{{ section.id }}-{{ block.id }}"></div>
     </form>
@@ -118,21 +128,47 @@ document.addEventListener('DOMContentLoaded', () => {
   let locationData = {};
   let currentCart = null;
 
+  const updateCart = async (line, quantity) => {
+    modal.style.opacity = '0.5';
+    try {
+      const res = await fetch('/cart/change.js', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ line: line, quantity: quantity })
+      });
+      currentCart = await res.json();
+      updateCartSummary();
+      document.dispatchEvent(new CustomEvent('cart:updated', { bubbles: true, detail: { cart: currentCart } }));
+    } catch (error) {
+      console.error('Error updating cart:', error);
+    } finally {
+      modal.style.opacity = '1';
+    }
+  };
+
   const updateCartSummary = () => {
     if (!currentCart) return;
 
     cartSummaryContainer.innerHTML = '';
 
-    currentCart.items.forEach(item => {
+    currentCart.items.forEach((item, index) => {
+      const line = index + 1;
       const itemHtml = `
         <div class="cod-cart-item">
           <img src="${item.image}" alt="${item.title}">
           <div class="cod-cart-item-details">
             <div class="cod-cart-item-title">${item.product_title}</div>
             <div>${item.variant_title || ''}</div>
-            <div>Qty: ${item.quantity}</div>
+            <div class="cod-quantity-selector">
+              <button type="button" class="cod-quantity-btn" data-line="${line}" data-qty="${item.quantity - 1}">-</button>
+              <input type="text" class="cod-quantity-input" value="${item.quantity}" readonly>
+              <button type="button" class="cod-quantity-btn" data-line="${line}" data-qty="${item.quantity + 1}">+</button>
+            </div>
           </div>
-          <div class="cod-cart-item-price">Rs. ${(item.final_line_price / 100).toFixed(2)}</div>
+          <div class="cod-cart-item-price">
+            Rs. ${(item.final_line_price / 100).toFixed(2)}
+            <button type="button" class="cod-remove-item" data-line="${line}">&times;</button>
+          </div>
         </div>
       `;
       cartSummaryContainer.innerHTML += itemHtml;
@@ -167,11 +203,28 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     `;
     cartSummaryContainer.innerHTML += priceDetailsHtml;
+
+    cartSummaryContainer.querySelectorAll('.cod-quantity-btn').forEach(button => {
+      button.addEventListener('click', () => {
+        const line = parseInt(button.dataset.line);
+        const qty = parseInt(button.dataset.qty);
+        if (qty >= 0) {
+          updateCart(line, qty);
+        }
+      });
+    });
+
+    cartSummaryContainer.querySelectorAll('.cod-remove-item').forEach(button => {
+      button.addEventListener('click', () => {
+        const line = parseInt(button.dataset.line);
+        updateCart(line, 0);
+      });
+    });
   };
 
   const updateCities = () => {
     const selectedCountry = countrySelect.value;
-    citySelect.innerHTML = '<option value="">Select City</option>';
+    citySelect.innerHTML = '<option value="">Select Provinces</option>';
     if (locationData[selectedCountry] && locationData[selectedCountry].cities) {
       locationData[selectedCountry].cities.forEach(city => {
         const option = document.createElement('option');
@@ -228,6 +281,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
       updateCartSummary();
 
+      const cartCountElements = document.querySelectorAll('.cart-count-bubble, .site-header__cart-count, [data-cart-count]');
+      cartCountElements.forEach(el => {
+        el.textContent = currentCart.item_count;
+      });
       document.dispatchEvent(new CustomEvent('cart:updated', { bubbles: true, detail: { cart: currentCart } }));
 
       modal.style.display = 'flex';
@@ -438,7 +495,7 @@ document.addEventListener('DOMContentLoaded', () => {
     {
       "type": "number",
       "id": "default_shipping_rate",
-      "label": "Default Shipping Rate (PKR)",
+      "label": "Default Shipping Rate",
       "info": "This rate will be used if no specific rate is set for a city.",
       "default": 250
     }
