@@ -43,12 +43,12 @@ model ShippingRate {
 }
 
 model AppSettings {
-  id          Int      @id @default(autoincrement())
-  shop        String   @unique
-  otpEnabled  Boolean  @default(false)
-  // Mustaqbil mein hum yahan SMS service ki API keys bhi save karenge
-  // smsApiKey   String?
-  // smsApiSecret String?
+  id                Int      @id @default(autoincrement())
+  shop              String   @unique
+  otpEnabled        Boolean  @default(false)
+  twilioAccountSid  String?
+  twilioAuthToken   String?
+  twilioPhoneNumber String?
 }
 
 model OtpLog {

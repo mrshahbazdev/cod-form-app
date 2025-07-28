@@ -21,10 +21,11 @@
     border-radius: 4px; box-sizing: border-box;
   }
   .cod-form-error { color: red; font-size: 0.9em; margin-top: 5px; display: none; }
-  .cod-submit-btn {
+  .cod-submit-btn, .cod-otp-btn {
     width: 100%; padding: 12px; border: none; border-radius: 4px;
     font-weight: bold; cursor: pointer; font-size: 16px;
   }
+  .cod-otp-btn { margin-bottom: 10px; background-color: #555; color: #fff; }
   #cod-form-message { margin-top: 15px; text-align: center; }
   .cod-cart-summary { margin-bottom: 20px; }
   .cod-cart-item { display: flex; align-items: center; margin-bottom: 15px; }
@@ -39,6 +40,7 @@
   .cod-quantity-btn { width: 25px; height: 25px; border: 1px solid #ccc; background-color: #f9f9f9; cursor: pointer; }
   .cod-quantity-input { width: 40px; text-align: center; border: 1px solid #ccc; border-left: none; border-right: none; height: 25px; }
   .cod-remove-item { margin-left: auto; background: none; border: none; color: red; cursor: pointer; font-size: 18px; }
+  .cod-hidden { display: none; }
 </style>
 
 <div class="card">
@@ -57,49 +59,53 @@
     <p>{{ block.settings.form_subtitle }}</p>
     <hr style="margin: 15px 0;">
     <form id="cod-form-{{ section.id }}-{{ block.id }}" novalidate>
-      <div class="cod-form-field">
-        <label for="cod-name-{{ section.id }}-{{ block.id }}" style="color: {{ block.settings.form_label_color }};">Your name *</label>
-        <input type="text" id="cod-name-{{ section.id }}-{{ block.id }}" name="name" required>
-      </div>
-
-      {% if block.settings.show_phone_field %}
+      <div id="customer-details-fields-{{ section.id }}-{{ block.id }}">
+        <div class="cod-form-field">
+          <label for="cod-name-{{ section.id }}-{{ block.id }}" style="color: {{ block.settings.form_label_color }};">Your name *</label>
+          <input type="text" id="cod-name-{{ section.id }}-{{ block.id }}" name="name" required>
+        </div>
         <div class="cod-form-field">
           <label for="cod-phone-{{ section.id }}-{{ block.id }}" style="color: {{ block.settings.form_label_color }};">Phone number *</label>
           <input type="tel" id="cod-phone-{{ section.id }}-{{ block.id }}" name="phone" required>
           <div id="cod-phone-error-{{ section.id }}-{{ block.id }}" class="cod-form-error"></div>
         </div>
-      {% endif %}
-
-      {% if block.settings.show_email_field %}
-        <div class="cod-form-field">
-          <label for="cod-email-{{ section.id }}-{{ block.id }}" style="color: {{ block.settings.form_label_color }};">Email</label>
-          <input type="email" id="cod-email-{{ section.id }}-{{ block.id }}" name="email">
-        </div>
-      {% endif %}
-
-      <div class="cod-form-field">
-        <label for="cod-country-{{ section.id }}-{{ block.id }}" style="color: {{ block.settings.form_label_color }};">Country *</label>
-        <select id="cod-country-{{ section.id }}-{{ block.id }}" name="country" required></select>
+        <button type="button" id="send-otp-btn-{{ section.id }}-{{ block.id }}" class="cod-otp-btn cod-hidden">Send OTP</button>
       </div>
 
-      {% if block.settings.show_address_field %}
-        <div class="cod-form-field">
-          <label for="cod-address-{{ section.id }}-{{ block.id }}" style="color: {{ block.settings.form_label_color }};">Address *</label>
-          <input type="text" id="cod-address-{{ section.id }}-{{ block.id }}" name="address" required>
-        </div>
-      {% endif %}
-
-      {% if block.settings.show_city_field %}
-        <div class="cod-form-field">
-          <label for="cod-city-{{ section.id }}-{{ block.id }}" style="color: {{ block.settings.form_label_color }};">City *</label>
-          <select id="cod-city-{{ section.id }}-{{ block.id }}" name="city" required></select>
-        </div>
-      {% endif %}
-
-      <div class="cod-form-field">
-        <label for="cod-province-{{ section.id }}-{{ block.id }}" style="color: {{ block.settings.form_label_color }};">Province / State *</label>
-        <input type="text" id="cod-province-{{ section.id }}-{{ block.id }}" name="province" required>
+      <div id="otp-field-container-{{ section.id }}-{{ block.id }}" class="cod-form-field cod-hidden">
+        <label for="cod-otp-{{ section.id }}-{{ block.id }}" style="color: {{ block.settings.form_label_color }};">Enter OTP *</label>
+        <input type="text" id="cod-otp-{{ section.id }}-{{ block.id }}" name="otp">
       </div>
+
+      <div id="shipping-details-fields-{{ section.id }}-{{ block.id }}" class="cod-hidden">
+        {% if block.settings.show_email_field %}
+          <div class="cod-form-field">
+            <label for="cod-email-{{ section.id }}-{{ block.id }}" style="color: {{ block.settings.form_label_color }};">Email</label>
+            <input type="email" id="cod-email-{{ section.id }}-{{ block.id }}" name="email">
+          </div>
+        {% endif %}
+        <div class="cod-form-field">
+          <label for="cod-country-{{ section.id }}-{{ block.id }}" style="color: {{ block.settings.form_label_color }};">Country *</label>
+          <select id="cod-country-{{ section.id }}-{{ block.id }}" name="country" required></select>
+        </div>
+        {% if block.settings.show_address_field %}
+          <div class="cod-form-field">
+            <label for="cod-address-{{ section.id }}-{{ block.id }}" style="color: {{ block.settings.form_label_color }};">Address *</label>
+            <input type="text" id="cod-address-{{ section.id }}-{{ block.id }}" name="address" required>
+          </div>
+        {% endif %}
+        {% if block.settings.show_city_field %}
+          <div class="cod-form-field">
+            <label for="cod-city-{{ section.id }}-{{ block.id }}" style="color: {{ block.settings.form_label_color }};">City *</label>
+            <select id="cod-city-{{ section.id }}-{{ block.id }}" name="city" required></select>
+          </div>
+        {% endif %}
+        <div class="cod-form-field">
+          <label for="cod-province-{{ section.id }}-{{ block.id }}" style="color: {{ block.settings.form_label_color }};">Province / State *</label>
+          <input type="text" id="cod-province-{{ section.id }}-{{ block.id }}" name="province" required>
+        </div>
+      </div>
+
       <button type="submit" class="cod-submit-btn" style="background-color: {{ block.settings.button_color }}; color: {{ block.settings.text_color }};">COMPLETE ORDER</button>
       <div id="cod-form-message-{{ section.id }}-{{ block.id }}"></div>
     </form>
@@ -118,9 +124,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const cartSummaryContainer = document.getElementById('cod-cart-summary' + uniqueId);
   const countrySelect = document.getElementById('cod-country' + uniqueId);
   const citySelect = document.getElementById('cod-city' + uniqueId);
+  const sendOtpBtn = document.getElementById('send-otp-btn' + uniqueId);
+  const otpContainer = document.getElementById('otp-field-container' + uniqueId);
+  const shippingContainer = document.getElementById('shipping-details-fields' + uniqueId);
+  const phoneInput = document.getElementById('cod-phone' + uniqueId);
 
   let locationData = {};
   let currentCart = null;
+  let isOtpEnabled = false;
 
   const updateCart = async (line, quantity) => {
     modal.style.opacity = '0.5';
@@ -246,10 +257,22 @@ document.addEventListener('DOMContentLoaded', () => {
     openBtn.disabled = true;
 
     try {
-      const [locationsRes, ipRes] = await Promise.all([
+      const [settingsRes, locationsRes, ipRes] = await Promise.all([
+        fetch('/apps/cod-proxy/get-settings'),
         fetch('/apps/cod-proxy/get-locations'),
         fetch('/apps/cod-proxy/get-country-by-ip')
       ]);
+
+      const { otpEnabled } = await settingsRes.json();
+      isOtpEnabled = otpEnabled;
+
+      if (isOtpEnabled) {
+        sendOtpBtn.classList.remove('cod-hidden');
+        submitBtn.innerText = "Verify & Complete Order";
+      } else {
+        shippingContainer.classList.remove('cod-hidden');
+        submitBtn.innerText = "COMPLETE ORDER";
+      }
 
       const { locations } = await locationsRes.json();
       const { country: userCountry } = await ipRes.json();
@@ -281,10 +304,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       updateCartSummary();
 
-      const cartCountElements = document.querySelectorAll('.cart-count-bubble, .site-header__cart-count, [data-cart-count]');
-      cartCountElements.forEach(el => {
-        el.textContent = currentCart.item_count;
-      });
       document.dispatchEvent(new CustomEvent('cart:updated', { bubbles: true, detail: { cart: currentCart } }));
 
       modal.style.display = 'flex';
@@ -294,6 +313,42 @@ document.addEventListener('DOMContentLoaded', () => {
     } finally {
       openBtn.innerText = "{{ block.settings.button_text | escape }}";
       openBtn.disabled = false;
+    }
+  });
+
+  sendOtpBtn.addEventListener('click', async () => {
+    const phone = phoneInput.value;
+    if (!phone) {
+      alert('Please enter a phone number first.');
+      return;
+    }
+
+    sendOtpBtn.innerText = 'SENDING...';
+    sendOtpBtn.disabled = true;
+    messageDiv.innerText = '';
+
+    try {
+      const response = await fetch('/apps/cod-proxy/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone }),
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        messageDiv.style.color = 'green';
+        messageDiv.innerText = 'OTP sent! Please check your phone.';
+        otpContainer.classList.remove('cod-hidden');
+        shippingContainer.classList.remove('cod-hidden');
+      } else {
+        throw new Error(result.error);
+      }
+    } catch (error) {
+      messageDiv.style.color = 'red';
+      messageDiv.innerText = error.message;
+    } finally {
+      sendOtpBtn.innerText = 'Resend OTP';
+      sendOtpBtn.disabled = false;
     }
   });
 
@@ -313,7 +368,6 @@ document.addEventListener('DOMContentLoaded', () => {
     messageDiv.innerText = '';
 
     let isValid = true;
-    const phoneInput = document.getElementById('cod-phone' + uniqueId);
     if (phoneInput) {
       const phoneErrorDiv = document.getElementById('cod-phone-error' + uniqueId);
       if (!phoneInput.value) {
@@ -372,7 +426,8 @@ document.addEventListener('DOMContentLoaded', () => {
         body: JSON.stringify({
           cartItems: cart.items,
           customer: customerDetails,
-          shippingInfo: shippingInfo
+          shippingInfo: shippingInfo,
+          otp: formData.get('otp')
         }),
       });
 
