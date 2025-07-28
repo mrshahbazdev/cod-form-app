@@ -60,12 +60,15 @@ export default function ShippingRatesPage() {
   const [isEditing, setIsEditing] = useState(null);
   const [formState, setFormState] = useState({ country: '', city: '', rate: '', currency: '' });
 
-  // State for the "Add City" form
   const countries = [...new Set(rates.map(rate => rate.country))];
   const [selectedCountryForNewCity, setSelectedCountryForNewCity] = useState(countries[0] || "");
   const [newCity, setNewCity] = useState("");
   const [newCityRate, setNewCityRate] = useState("");
   const [newCityCurrency, setNewCityCurrency] = useState("PKR");
+
+  const [newCountry, setNewCountry] = useState("");
+  const [newCountryRate, setNewCountryRate] = useState("");
+  const [newCountryCurrency, setNewCountryCurrency] = useState("PKR");
 
   useEffect(() => {
     if (actionData?.success) {
@@ -73,6 +76,8 @@ export default function ShippingRatesPage() {
       setFormState({ country: '', city: '', rate: '', currency: '' });
       setNewCity('');
       setNewCityRate('');
+      setNewCountry('');
+      setNewCountryRate('');
     }
   }, [actionData]);
 
@@ -84,7 +89,7 @@ export default function ShippingRatesPage() {
       rate: rate.rate,
       currency: rate.currency,
     });
-    window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll to top to show the edit form
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleFormChange = (key, value) => {
@@ -135,9 +140,9 @@ export default function ShippingRatesPage() {
                 <input type="hidden" name="_action" value="add_or_update_rate" />
                 <input type="hidden" name="city" value="" />
                 <InlineStack gap="400" align="start" blockAlign="end">
-                  <div style={{ flex: 1 }}><TextField label="Country Name" name="country" autoComplete="off" placeholder="e.g., Pakistan" /></div>
-                  <div style={{ flex: 1 }}><TextField label="Default Rate" name="rate" type="number" autoComplete="off" placeholder="e.g., 250" /></div>
-                  <div style={{ flex: 0.5 }}><TextField label="Currency" name="currency" autoComplete="off" placeholder="e.g., PKR" /></div>
+                  <div style={{ flex: 1 }}><TextField label="Country Name" name="country" value={newCountry} onChange={setNewCountry} autoComplete="off" placeholder="e.g., Pakistan" /></div>
+                  <div style={{ flex: 1 }}><TextField label="Default Rate" name="rate" type="number" value={newCountryRate} onChange={setNewCountryRate} autoComplete="off" placeholder="e.g., 250" /></div>
+                  <div style={{ flex: 0.5 }}><TextField label="Currency" name="currency" value={newCountryCurrency} onChange={setNewCountryCurrency} autoComplete="off" placeholder="e.g., PKR" /></div>
                   <div><Button submit variant="primary">Save Default Rate</Button></div>
                 </InlineStack>
               </Form>
