@@ -1,7 +1,5 @@
 {% comment %}
-  This file creates a popup modal (form) and a button to open it.
-  It fetches locations and rates from the database, auto-detects the user's country via IP,
-  and updates the cart summary dynamically.
+  Updated with multi-country support, dynamic city dropdowns from DB, and IP-based country detection.
 {% endcomment %}
 
 <style>
@@ -10,7 +8,6 @@
     background-color: rgba(0, 0, 0, 0.6); z-index: 999999; display: none;
     align-items: flex-start;
     justify-content: center; overflow-y: auto; padding: 40px 15px;
-    box-sizing: border-box;
   }
   .cod-modal-content {
     padding: 25px; border-radius: 8px; width: 100%; max-width: 500px;
@@ -148,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectedCity = citySelect.value.toLowerCase();
     const countryInfo = locationData[selectedCountry];
 
-    let shippingInfo = countryInfo?.rates['default'] || { rate: {{ block.settings.default_shipping_rate }}, currency: 'PKR' };
+    let shippingInfo = countryInfo?.rates['default'] || { rate: 250, currency: 'PKR' };
     if (countryInfo?.rates[selectedCity]) {
       shippingInfo = countryInfo.rates[selectedCity];
     }
@@ -234,10 +231,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       updateCartSummary();
 
-      const cartCountElements = document.querySelectorAll('.cart-count-bubble, .site-header__cart-count, [data-cart-count]');
-      cartCountElements.forEach(el => {
-        el.textContent = currentCart.item_count;
-      });
       document.dispatchEvent(new CustomEvent('cart:updated', { bubbles: true, detail: { cart: currentCart } }));
 
       modal.style.display = 'flex';
@@ -269,8 +262,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const phoneInput = document.getElementById('cod-phone' + uniqueId);
     if (phoneInput) {
       const phoneErrorDiv = document.getElementById('cod-phone-error' + uniqueId);
-      if (!phoneInput.value) { // Simple check if phone is empty
-        phoneErrorDiv.innerText = "Phone number is required.";
+      const phoneRegex = new RegExp(phoneInput.pattern);
+      if (!phoneRegex.test(phoneInput.value)) {
+        phoneErrorDiv.innerText = phoneInput.title;
         phoneErrorDiv.style.display = 'block';
         isValid = false;
       } else {
