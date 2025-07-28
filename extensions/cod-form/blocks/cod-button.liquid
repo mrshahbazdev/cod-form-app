@@ -87,15 +87,15 @@
 
       {% if block.settings.show_city_field %}
         <div class="cod-form-field">
-          <label for="cod-city-{{ section.id }}-{{ block.id }}" style="color: {{ block.settings.form_label_color }};">City *</label>
+          <label for="cod-city-{{ section.id }}-{{ block.id }}" style="color: {{ block.settings.form_label_color }};">Provinces *</label>
           <select id="cod-city-{{ section.id }}-{{ block.id }}" name="city" required></select>
         </div>
       {% endif %}
 
       <div class="cod-form-field">
-        <label for="cod-province-{{ section.id }}-{{ block.id }}" style="color: {{ block.settings.form_label_color }};">Province / State *</label>
+        <label for="cod-province-{{ section.id }}-{{ block.id }}" style="color: {{ block.settings.form_label_color }};">City *</label>
         <input type="text" id="cod-province-{{ section.id }}-{{ block.id }}" name="province" required>
-      </div>
+    </div>
       <button type="submit" class="cod-submit-btn" style="background-color: {{ block.settings.button_color }}; color: {{ block.settings.text_color }};">COMPLETE ORDER</button>
       <div id="cod-form-message-{{ section.id }}-{{ block.id }}"></div>
     </form>

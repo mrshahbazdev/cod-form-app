@@ -133,7 +133,7 @@ export default function ShippingRatesPage() {
                   <input type="hidden" name="city" value={formState.city} />
                   <InlineStack gap="400" align="start" blockAlign="end">
                     <div style={{ flex: 1 }}><TextField label="Country Name" value={formState.country} autoComplete="off" disabled /></div>
-                    <div style={{ flex: 1 }}><TextField label="City (Optional for default)" value={formState.city} autoComplete="off" disabled /></div>
+                    <div style={{ flex: 1 }}><TextField label="Provinces (Optional for default)" value={formState.city} autoComplete="off" disabled /></div>
                     <div style={{ flex: 1 }}><TextField label="Rate" name="rate" type="number" value={formState.rate} onChange={(val) => handleFormChange('rate', val)} autoComplete="off" /></div>
                     <div style={{ flex: 0.5 }}><TextField label="Currency" name="currency" value={formState.currency} onChange={(val) => handleFormChange('currency', val)} autoComplete="off" /></div>
                     <div><Button submit variant="primary">Update</Button></div>
@@ -149,7 +149,7 @@ export default function ShippingRatesPage() {
           <Card>
             <BlockStack gap="500">
               <Text as="h2" variant="headingMd">Add New Country / Default Rate</Text>
-              <Text>Use this form to add a new country or update a country's default rate (leave City blank).</Text>
+              <Text>Use this form to add a new country or update a country's default rate (leave Provinces blank).</Text>
               <Form method="post">
                 <input type="hidden" name="_action" value="add_or_update_rate" />
                 <input type="hidden" name="city" value="" />
@@ -167,7 +167,7 @@ export default function ShippingRatesPage() {
         <Layout.Section>
           <Card>
             <BlockStack gap="500">
-              <Text as="h2" variant="headingMd">Add City-Specific Rate</Text>
+              <Text as="h2" variant="headingMd">Add Provinces-Specific Rate</Text>
               <Form method="post">
                 <input type="hidden" name="_action" value="add_or_update_rate" />
                 <input type="hidden" name="currency" value={newCityCurrency} />
@@ -178,7 +178,7 @@ export default function ShippingRatesPage() {
                   <div style={{ flex: 1 }}><TextField label="City Name" name="city" value={newCity} onChange={setNewCity} autoComplete="off" placeholder="e.g., Karachi" /></div>
                   <div style={{ flex: 1 }}><TextField label="Specific Rate" name="rate" type="number" value={newCityRate} onChange={setNewCityRate} autoComplete="off" placeholder="e.g., 150" /></div>
                   <div style={{ flex: 0.5 }}><TextField label="Currency" value={newCityCurrency} autoComplete="off" disabled /></div>
-                  <div><Button submit variant="primary">Add City Rate</Button></div>
+                  <div><Button submit variant="primary">Add Provinces Rate</Button></div>
                 </InlineStack>
               </Form>
             </BlockStack>
@@ -190,11 +190,11 @@ export default function ShippingRatesPage() {
             <BlockStack gap="500">
               <Text as="h2" variant="headingMd">Existing Rates</Text>
               <Select label="Filter by Country" options={[{label: "All Countries", value: ""}, ...countryOptions]} onChange={setSelectedCountryFilter} value={selectedCountryFilter} />
-              <IndexTable resourceName={{ singular: 'rate', plural: 'rates' }} itemCount={rates.length} headings={[{ title: 'Country' }, { title: 'City' }, { title: 'Rate' }, { title: 'Actions' }]} selectable={false}>
+              <IndexTable resourceName={{ singular: 'rate', plural: 'rates' }} itemCount={rates.length} headings={[{ title: 'Country' }, { title: 'Provinces' }, { title: 'Rate' }, { title: 'Actions' }]} selectable={false}>
                 {rates.filter(rate => !selectedCountryFilter || rate.country === selectedCountryFilter).map((rate, index) => (
                   <IndexTable.Row id={rate.id} key={rate.id} position={index}>
                     <IndexTable.Cell>{rate.country}</IndexTable.Cell>
-                    <IndexTable.Cell>{rate.city || "All Cities (Default)"}</IndexTable.Cell>
+                    <IndexTable.Cell>{rate.city || "All Provinces (Default)"}</IndexTable.Cell>
                     <IndexTable.Cell>{rate.currency} {rate.rate.toFixed(2)}</IndexTable.Cell>
                     <IndexTable.Cell>
                       <InlineStack gap="200">
