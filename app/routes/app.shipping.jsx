@@ -1,20 +1,32 @@
 import { useState, useCallback, useEffect } from "react";
 import { json } from "@remix-run/node";
 import { useLoaderData, useSubmit, Form, useActionData } from "@remix-run/react";
-import { Page, Layout, Card, TextField, Button, IndexTable, Text, BlockStack, InlineStack, Select } from "@shopify/polaris";
+import {
+  Page,
+  Layout,
+  Card,
+  TextField,
+  Button,
+  IndexTable,
+  Text,
+  BlockStack,
+  InlineStack,
+  Select,
+} from "@shopify/polaris";
 import { authenticate } from "../shopify.server";
-// NAYI TABDEELI: Humne yahan se 'db' ka import hata diya hai
+import db from "../db.server";
 
 export async function loader({ request }) {
-  const db = (await import("../db.server")).default; // NAYI TABDEELI: 'db' ko yahan import karein
   const { session } = await authenticate.admin(request);
   const { shop } = session;
-  const shippingRates = await db.shippingRate.findMany({ where: { shop }, orderBy: [{ country: "asc" }, { city: "asc" }] });
+  const shippingRates = await db.shippingRate.findMany({
+    where: { shop },
+    orderBy: [{ country: "asc" }, { city: "asc" }],
+  });
   return json({ rates: shippingRates });
 }
 
 export async function action({ request }) {
-  const db = (await import("../db.server")).default; // NAYI TABDEELI: 'db' ko yahan import karein
   const { session } = await authenticate.admin(request);
   const { shop } = session;
   const formData = await request.formData();
@@ -40,35 +52,37 @@ export async function action({ request }) {
   return json({ success: true });
 }
 
-// Baqi tamam code pehle jaisa hi hai...
 export default function ShippingRatesPage() {
   const { rates } = useLoaderData();
   const actionData = useActionData();
   const submit = useSubmit();
 
-  const [isEditing, setIsEditing] = useState(null);
-  const [formState, setFormState] = useState({ country: '', city: '', rate: '', currency: '' });
+  // State for the main filter dropdown
+  const countries = [...new Set(rates.map(rate => rate.country))];
+  const [selectedCountryFilter, setSelectedCountryFilter] = useState("");
 
+  // State for the "Add City" form
+  const [selectedCountryForNewCity, setSelectedCountryForNewCity] = useState(countries[0] || "");
+  const [newCity, setNewCity] = useState("");
+  const [newCityRate, setNewCityRate] = useState("");
+  const [newCityCurrency, setNewCityCurrency] = useState("PKR");
+
+  // State for the "Add Country" form
+  const [newCountry, setNewCountry] = useState("");
+  const [newCountryRate, setNewCountryRate] = useState("");
+  const [newCountryCurrency, setNewCountryCurrency] = useState("PKR");
+
+  // Reset forms after successful submission
   useEffect(() => {
     if (actionData?.success) {
-      setIsEditing(null);
-      setFormState({ country: '', city: '', rate: '', currency: '' });
+      setNewCity("");
+      setNewCityRate("");
+      setNewCountry("");
+      setNewCountryRate("");
     }
   }, [actionData]);
 
-  const handleEditClick = (rate) => {
-    setIsEditing(rate.id);
-    setFormState({
-      country: rate.country,
-      city: rate.city || "",
-      rate: rate.rate,
-      currency: rate.currency,
-    });
-  };
-
-  const handleFormChange = (key, value) => {
-    setFormState(prev => ({ ...prev, [key]: value }));
-  };
+  const countryOptions = countries.map(country => ({ label: country, value: country }));
 
   const handleDelete = (id) => {
     const formData = new FormData();
@@ -77,10 +91,6 @@ export default function ShippingRatesPage() {
     submit(formData, { method: "post" });
   };
 
-  const countries = [...new Set(rates.map(rate => rate.country))];
-  const [selectedCountryFilter, setSelectedCountryFilter] = useState("");
-  const countryOptions = countries.map(country => ({ label: country, value: country }));
-
   return (
     <Page>
       <ui-title-bar title="Manage Shipping Rates" />
@@ -88,38 +98,53 @@ export default function ShippingRatesPage() {
         <Layout.Section>
           <Card>
             <BlockStack gap="500">
-              <Text as="h2" variant="headingMd">{isEditing ? `Editing Rate for ${formState.country}` : "Add New Rate"}</Text>
+              <Text as="h2" variant="headingMd">Add New Country (with Default Rate)</Text>
               <Form method="post">
                 <input type="hidden" name="_action" value="add_or_update_rate" />
+                <input type="hidden" name="city" value="" /> {/* Default rate has no city */}
                 <InlineStack gap="400" align="start" blockAlign="end">
-                  <div style={{ flex: 1 }}><TextField label="Country Name" name="country" value={formState.country} onChange={(val) => handleFormChange('country', val)} autoComplete="off" placeholder="e.g., Pakistan" disabled={isEditing} /></div>
-                  <div style={{ flex: 1 }}><TextField label="City (Optional for default)" name="city" value={formState.city} onChange={(val) => handleFormChange('city', val)} autoComplete="off" placeholder="e.g., Karachi" disabled={isEditing} /></div>
-                  <div style={{ flex: 1 }}><TextField label="Rate" name="rate" type="number" value={formState.rate} onChange={(val) => handleFormChange('rate', val)} autoComplete="off" placeholder="e.g., 250" /></div>
-                  <div style={{ flex: 0.5 }}><TextField label="Currency" name="currency" value={formState.currency} onChange={(val) => handleFormChange('currency', val)} autoComplete="off" placeholder="e.g., PKR" /></div>
-                  <div><Button submit variant="primary">{isEditing ? "Update" : "Add"}</Button></div>
-                  {isEditing && <Button onClick={() => { setIsEditing(null); setFormState({ country: '', city: '', rate: '', currency: '' }); }}>Cancel</Button>}
+                  <div style={{ flex: 2 }}><TextField label="Country Name" name="country" value={newCountry} onChange={setNewCountry} autoComplete="off" placeholder="e.g., Pakistan" /></div>
+                  <div style={{ flex: 1 }}><TextField label="Default Rate" name="rate" type="number" value={newCountryRate} onChange={setNewCountryRate} autoComplete="off" placeholder="e.g., 250" /></div>
+                  <div style={{ flex: 1 }}><TextField label="Currency" name="currency" value={newCountryCurrency} onChange={setNewCountryCurrency} autoComplete="off" placeholder="e.g., PKR" /></div>
+                  <div><Button submit variant="primary">Add Country</Button></div>
                 </InlineStack>
               </Form>
             </BlockStack>
           </Card>
         </Layout.Section>
+
+        <Layout.Section>
+          <Card>
+            <BlockStack gap="500">
+              <Text as="h2" variant="headingMd">Add City-Specific Rate</Text>
+              <Form method="post">
+                <input type="hidden" name="_action" value="add_or_update_rate" />
+                <InlineStack gap="400" align="start" blockAlign="end">
+                  <div style={{ flex: 1 }}>
+                    <Select label="Select Country" options={countryOptions} onChange={setSelectedCountryForNewCity} value={selectedCountryForNewCity} name="country" />
+                  </div>
+                  <div style={{ flex: 1 }}><TextField label="City Name" name="city" value={newCity} onChange={setNewCity} autoComplete="off" placeholder="e.g., Karachi" /></div>
+                  <div style={{ flex: 1 }}><TextField label="Specific Rate" name="rate" type="number" value={newCityRate} onChange={setNewCityRate} autoComplete="off" placeholder="e.g., 150" /></div>
+                  <div style={{ flex: 1 }}><TextField label="Currency" name="currency" value={newCityCurrency} onChange={setNewCityCurrency} autoComplete="off" placeholder="e.g., PKR" /></div>
+                  <div><Button submit variant="primary">Add City Rate</Button></div>
+                </InlineStack>
+              </Form>
+            </BlockStack>
+          </Card>
+        </Layout.Section>
+
         <Layout.Section>
           <Card>
             <BlockStack gap="500">
               <Text as="h2" variant="headingMd">Existing Rates</Text>
               <Select label="Filter by Country" options={[{label: "All Countries", value: ""}, ...countryOptions]} onChange={setSelectedCountryFilter} value={selectedCountryFilter} />
-              <IndexTable resourceName={{ singular: 'rate', plural: 'rates' }} itemCount={rates.length} headings={[{ title: 'Country' }, { title: 'City' }, { title: 'Rate' }, { title: 'Actions' }]} selectable={false}>
-                {rates.filter(rate => !selectedCountryFilter || rate.country === selectedCountryFilter).map((rate, index) => (
-                  <IndexTable.Row id={rate.id} key={rate.id} position={index}>
-                    <IndexTable.Cell>{rate.country}</IndexTable.Cell>
-                    <IndexTable.Cell>{rate.city || "All Cities (Default)"}</IndexTable.Cell>
-                    <IndexTable.Cell>{rate.currency} {rate.rate.toFixed(2)}</IndexTable.Cell>
-                    <IndexTable.Cell>
-                      <InlineStack gap="200">
-                        <Button onClick={() => handleEditClick(rate)}>Edit</Button>
-                        <Button variant="tertiary" onClick={() => handleDelete(rate.id)}>Delete</Button>
-                      </InlineStack>
-                    </IndexTable.Cell>
+              <IndexTable resourceName={{ singular: 'rate', plural: 'rates' }} itemCount={rates.length} headings={[{ title: 'Country' }, { title: 'City' }, { title: 'Rate' }, { title: 'Action' }]} selectable={false}>
+                {rates.filter(rate => !selectedCountryFilter || rate.country === selectedCountryFilter).map(({ id, country, city, rate, currency }, index) => (
+                  <IndexTable.Row id={id} key={id} position={index}>
+                    <IndexTable.Cell>{country}</IndexTable.Cell>
+                    <IndexTable.Cell>{city || "All Cities (Default)"}</IndexTable.Cell>
+                    <IndexTable.Cell>{currency} {rate.toFixed(2)}</IndexTable.Cell>
+                    <IndexTable.Cell><Button variant="tertiary" onClick={() => handleDelete(id)}>Delete</Button></IndexTable.Cell>
                   </IndexTable.Row>
                 ))}
               </IndexTable>
