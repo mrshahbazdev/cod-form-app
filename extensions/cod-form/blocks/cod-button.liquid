@@ -97,13 +97,13 @@
 
       {% if block.settings.show_city_field %}
         <div class="cod-form-field">
-          <label for="cod-city-{{ section.id }}-{{ block.id }}" style="color: {{ block.settings.form_label_color }};">Provinces *</label>
+          <label for="cod-city-{{ section.id }}-{{ block.id }}" style="color: {{ block.settings.form_label_color }};">City *</label>
           <select id="cod-city-{{ section.id }}-{{ block.id }}" name="city" required></select>
         </div>
       {% endif %}
 
       <div class="cod-form-field">
-        <label for="cod-province-{{ section.id }}-{{ block.id }}" style="color: {{ block.settings.form_label_color }};">City *</label>
+        <label for="cod-province-{{ section.id }}-{{ block.id }}" style="color: {{ block.settings.form_label_color }};">Province / State *</label>
         <input type="text" id="cod-province-{{ section.id }}-{{ block.id }}" name="province" required>
       </div>
       <button type="submit" class="cod-submit-btn" style="background-color: {{ block.settings.button_color }}; color: {{ block.settings.text_color }};">COMPLETE ORDER</button>
@@ -138,7 +138,14 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       currentCart = await res.json();
       updateCartSummary();
+
+      // NAYI TABDEELI: Cart icon ko update karein
+      const cartCountElements = document.querySelectorAll('.cart-count-bubble, .site-header__cart-count, [data-cart-count]');
+      cartCountElements.forEach(el => {
+        el.textContent = currentCart.item_count;
+      });
       document.dispatchEvent(new CustomEvent('cart:updated', { bubbles: true, detail: { cart: currentCart } }));
+
     } catch (error) {
       console.error('Error updating cart:', error);
     } finally {
@@ -224,7 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const updateCities = () => {
     const selectedCountry = countrySelect.value;
-    citySelect.innerHTML = '<option value="">Select Provinces</option>';
+    citySelect.innerHTML = '<option value="">Select City</option>';
     if (locationData[selectedCountry] && locationData[selectedCountry].cities) {
       locationData[selectedCountry].cities.forEach(city => {
         const option = document.createElement('option');
