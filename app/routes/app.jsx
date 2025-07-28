@@ -22,10 +22,11 @@ export default function App() {
         <Link to="/app" rel="home">
           Home
         </Link>
-        {/* NAYI TABDEELI: Shipping Rates ka link yahan add kiya gaya hai */}
         <Link to="/app/shipping">Shipping Rates</Link>
-          <Link to="/app/ip-blocking">IP Blocking</Link> {/* YEH NAYA LINK HAI */}
+        <Link to="/app/ip-blocking">IP Blocking</Link>
         <Link to="/app/settings">Settings</Link>
+        <Link to="/app/gsheets-guide">Google Sheets Guide</Link>
+        <Link to="/app/additional">Additional page</Link>
       </NavMenu>
       <Outlet />
     </AppProvider>
