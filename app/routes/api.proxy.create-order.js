@@ -15,6 +15,12 @@ export async function action({ request }) {
 
     const { cartItems, customer, shippingInfo } = await request.json();
 
+    // NAYI LOGGING: Hum check karenge ke backend ko kya data mil raha hai
+    console.log("--- RECEIVED DATA FROM FRONTEND ---");
+    console.log("Received Customer:", JSON.stringify(customer, null, 2));
+    console.log("Received Shipping Info:", JSON.stringify(shippingInfo, null, 2));
+    // --- END LOGGING ---
+
     if (!cartItems || !customer || !shippingInfo) {
       return json({ success: false, error: "Missing required data." }, { status: 400 });
     }
