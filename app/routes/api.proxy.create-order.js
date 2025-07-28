@@ -4,25 +4,11 @@ import db from "../db.server";
 
 export async function action({ request }) {
   const { session, admin } = await authenticate.public.appProxy(request);
-  const { cartItems, customer } = await request.json();
+  const { cartItems, customer, shippingInfo } = await request.json();
 
-  if (!cartItems || !customer) {
-    return json({ success: false, error: "Missing cart or customer data." }, { status: 400 });
+  if (!cartItems || !customer || !shippingInfo) {
+    return json({ success: false, error: "Missing required data." }, { status: 400 });
   }
-
-  const ratesFromDb = await db.shippingRate.findMany({ where: { shop: session.shop } });
-  const rates = {};
-  ratesFromDb.forEach(rate => {
-    // country-city key for specific rates, country- key for default rates
-    const key = `${rate.country}-${rate.city || ''}`.toLowerCase();
-    rates[key] = { rate: rate.rate, currency: rate.currency };
-  });
-
-  const cityKey = `${customer.country}-${customer.city}`.toLowerCase();
-  const countryKey = `${customer.country}-`.toLowerCase();
-
-  // Find the most specific rate available, or fall back to a hardcoded default
-  const shippingInfo = rates[cityKey] || rates[countryKey] || { rate: 250.00, currency: "PKR" };
 
   const lineItems = cartItems.map(item => ({
     variantId: `gid://shopify/ProductVariant/${item.variant_id}`,
@@ -55,7 +41,7 @@ export async function action({ request }) {
             city: customer.city,
             province: customer.province,
             phone: customer.phone,
-            country: customer.country, // Use the country from the form
+            country: customer.country,
             firstName: firstName,
             lastName: lastName,
           },
