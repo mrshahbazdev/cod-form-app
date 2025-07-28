@@ -22,6 +22,7 @@ export default function App() {
         <Link to="/app" rel="home">
           Home
         </Link>
+        {/* NAYI TABDEELI: Shipping Rates ka link yahan add kiya gaya hai */}
         <Link to="/app/shipping">Shipping Rates</Link>
         <Link to="/app/additional">Additional page</Link>
       </NavMenu>

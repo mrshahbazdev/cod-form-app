@@ -32,11 +32,15 @@ model Session {
 }
 
 model ShippingRate {
-  id    Int    @id @default(autoincrement())
-  shop  String
-  city  String
-  rate  Float
+  id        Int     @id @default(autoincrement())
+  shop      String
+  country   String
+  city      String? // Optional for country-level rates
+  rate      Float
+  currency  String  @default("PKR") // NAYI FIELD
 
-  @@unique([shop, city], name: "shop_city")
+  @@unique([shop, country, city], name: "shop_country_city")
 }
+
+
 

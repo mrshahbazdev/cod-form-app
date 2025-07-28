@@ -1,5 +1,5 @@
 {% comment %}
-  Updated to fetch dynamic shipping rates and update total on city change.
+  Updated with multi-country support, dynamic city dropdowns from DB, and IP-based country detection.
 {% endcomment %}
 
 <style>
@@ -64,7 +64,7 @@
       {% if block.settings.show_phone_field %}
         <div class="cod-form-field">
           <label for="cod-phone-{{ section.id }}-{{ block.id }}" style="color: {{ block.settings.form_label_color }};">Phone number *</label>
-          <input type="tel" id="cod-phone-{{ section.id }}-{{ block.id }}" name="phone" required pattern="^((\+92)|(0092))-{0,1}\d{3}-{0,1}\d{7}$|^\d{11}$" title="Please enter a valid Pakistani phone number (e.g., 03001234567)">
+          <input type="tel" id="cod-phone-{{ section.id }}-{{ block.id }}" name="phone" required>
           <div id="cod-phone-error-{{ section.id }}-{{ block.id }}" class="cod-form-error"></div>
         </div>
       {% endif %}
@@ -76,6 +76,11 @@
         </div>
       {% endif %}
 
+      <div class="cod-form-field">
+        <label for="cod-country-{{ section.id }}-{{ block.id }}" style="color: {{ block.settings.form_label_color }};">Country *</label>
+        <select id="cod-country-{{ section.id }}-{{ block.id }}" name="country" required></select>
+      </div>
+
       {% if block.settings.show_address_field %}
         <div class="cod-form-field">
           <label for="cod-address-{{ section.id }}-{{ block.id }}" style="color: {{ block.settings.form_label_color }};">Address *</label>
@@ -86,22 +91,13 @@
       {% if block.settings.show_city_field %}
         <div class="cod-form-field">
           <label for="cod-city-{{ section.id }}-{{ block.id }}" style="color: {{ block.settings.form_label_color }};">City *</label>
-          <input type="text" id="cod-city-{{ section.id }}-{{ block.id }}" name="city" required>
+          <select id="cod-city-{{ section.id }}-{{ block.id }}" name="city" required></select>
         </div>
       {% endif %}
 
       <div class="cod-form-field">
-        <label for="cod-province-{{ section.id }}-{{ block.id }}" style="color: {{ block.settings.form_label_color }};">Province *</label>
-        <select id="cod-province-{{ section.id }}-{{ block.id }}" name="province" required>
-          <option value="">Select Province</option>
-          <option value="Punjab">Punjab</option>
-          <option value="Sindh">Sindh</option>
-          <option value="Khyber Pakhtunkhwa">Khyber Pakhtunkhwa</option>
-          <option value="Balochistan">Balochistan</option>
-          <option value="Gilgit-Baltistan">Gilgit-Baltistan</option>
-          <option value="Azad Kashmir">Azad Kashmir</option>
-          <option value="Islamabad Capital Territory">Islamabad Capital Territory</option>
-        </select>
+        <label for="cod-province-{{ section.id }}-{{ block.id }}" style="color: {{ block.settings.form_label_color }};">Province / State *</label>
+        <input type="text" id="cod-province-{{ section.id }}-{{ block.id }}" name="province" required>
       </div>
       <button type="submit" class="cod-submit-btn" style="background-color: {{ block.settings.button_color }}; color: {{ block.settings.text_color }};">COMPLETE ORDER</button>
       <div id="cod-form-message-{{ section.id }}-{{ block.id }}"></div>
@@ -119,8 +115,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const messageDiv = document.getElementById('cod-form-message' + uniqueId);
   const submitBtn = codForm.querySelector('.cod-submit-btn');
   const cartSummaryContainer = document.getElementById('cod-cart-summary' + uniqueId);
-  const cityInput = document.getElementById('cod-city' + uniqueId);
-  let shippingRates = {};
+  const countrySelect = document.getElementById('cod-country' + uniqueId);
+  const citySelect = document.getElementById('cod-city' + uniqueId);
+
+  let locationData = {};
   let currentCart = null;
 
   const updateCartSummary = () => {
@@ -143,46 +141,84 @@ document.addEventListener('DOMContentLoaded', () => {
       cartSummaryContainer.innerHTML += itemHtml;
     });
 
-    const selectedCity = cityInput ? cityInput.value.trim().toLowerCase() : '';
-    const cityRate = shippingRates[selectedCity];
-    const defaultRate = {{ block.settings.default_shipping_rate }};
-    const shippingRate = cityRate !== undefined ? cityRate : defaultRate;
+    const selectedCountry = countrySelect.value;
+    const selectedCity = citySelect.value.toLowerCase();
+    const countryInfo = locationData[selectedCountry];
+
+    let shippingInfo = countryInfo?.rates['default'] || { rate: 250, currency: 'PKR' };
+    if (countryInfo?.rates[selectedCity]) {
+      shippingInfo = countryInfo.rates[selectedCity];
+    }
 
     const subtotal = currentCart.total_price;
-    const total = subtotal + (shippingRate * 100);
+    const total = subtotal + (shippingInfo.rate * 100);
 
     const priceDetailsHtml = `
       <div class="cod-price-details">
         <div class="cod-price-row">
           <span>Subtotal</span>
-          <span>Rs. ${(subtotal / 100).toFixed(2)}</span>
+          <span>${shippingInfo.currency} ${(subtotal / 100).toFixed(2)}</span>
         </div>
         <div class="cod-price-row">
           <span>Shipping</span>
-          <span>Rs. ${shippingRate.toFixed(2)}</span>
+          <span>${shippingInfo.currency} ${shippingInfo.rate.toFixed(2)}</span>
         </div>
         <div class="cod-price-row total">
           <span>Total</span>
-          <span>Rs. ${(total / 100).toFixed(2)}</span>
+          <span>${shippingInfo.currency} ${(total / 100).toFixed(2)}</span>
         </div>
       </div>
     `;
     cartSummaryContainer.innerHTML += priceDetailsHtml;
   };
 
-  if(cityInput) {
-    cityInput.addEventListener('change', updateCartSummary);
-    cityInput.addEventListener('keyup', updateCartSummary);
-  }
+  const updateCities = () => {
+    const selectedCountry = countrySelect.value;
+    citySelect.innerHTML = '<option value="">Select City</option>';
+    if (locationData[selectedCountry] && locationData[selectedCountry].cities) {
+      locationData[selectedCountry].cities.forEach(city => {
+        const option = document.createElement('option');
+        option.value = city;
+        option.textContent = city;
+        citySelect.appendChild(option);
+      });
+    }
+  };
+
+  countrySelect.addEventListener('change', () => {
+    updateCities();
+    updateCartSummary();
+  });
+  citySelect.addEventListener('change', updateCartSummary);
 
   openBtn.addEventListener('click', async () => {
     openBtn.innerText = 'LOADING...';
     openBtn.disabled = true;
 
     try {
-      const ratesResponse = await fetch('/apps/cod-proxy/get-rates');
-      const ratesData = await ratesResponse.json();
-      shippingRates = ratesData.rates || {};
+      const [locationsRes, ipRes] = await Promise.all([
+        fetch('/apps/cod-proxy/get-locations'),
+        fetch('/apps/cod-proxy/get-country-by-ip')
+      ]);
+
+      const { locations } = await locationsRes.json();
+      const { country: userCountry } = await ipRes.json();
+      locationData = locations;
+
+      countrySelect.innerHTML = '';
+      for (const code in locationData) {
+        const option = document.createElement('option');
+        option.value = code;
+        option.textContent = locationData[code].name;
+        countrySelect.appendChild(option);
+      }
+
+      if (locationData[userCountry]) {
+        countrySelect.value = userCountry;
+        countrySelect.disabled = true;
+      }
+
+      updateCities();
 
       const productForm = document.querySelector('form[action="/cart/add"]');
       if (productForm) {
@@ -195,10 +231,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       updateCartSummary();
 
-      const cartCountElements = document.querySelectorAll('.cart-count-bubble, .site-header__cart-count, [data-cart-count]');
-      cartCountElements.forEach(el => {
-        el.textContent = currentCart.item_count;
-      });
       document.dispatchEvent(new CustomEvent('cart:updated', { bubbles: true, detail: { cart: currentCart } }));
 
       modal.style.display = 'flex';
@@ -269,6 +301,7 @@ document.addEventListener('DOMContentLoaded', () => {
       address: formData.get('address'),
       city: formData.get('city'),
       province: formData.get('province'),
+      country: formData.get('country')
     };
 
     try {
