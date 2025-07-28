@@ -55,7 +55,7 @@ model AppSettings {
 
   orderSpamProtectionEnabled Boolean  @default(false)
   orderSpamTimeLimit         Int?     @default(5)
-
+  googleSheetUrl             String?
   // NAYI FIELDS AUTO IP BLOCKING KE LIYE:
   autoIpBlockingEnabled      Boolean  @default(false)
   ipBlockAttemptLimit        Int?     @default(3) // Kitne attempts ke baad block karna hai

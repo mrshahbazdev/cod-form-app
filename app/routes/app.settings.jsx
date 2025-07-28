@@ -39,6 +39,7 @@ export async function action({ request }) {
     twilioAuthToken: formData.get("twilioAuthToken"),
     twilioPhoneNumber: formData.get("twilioPhoneNumber"),
     twilioVerifySid: formData.get("twilioVerifySid"),
+    googleSheetUrl: formData.get("googleSheetUrl"),
   };
 
   await db.appSettings.upsert({
@@ -66,6 +67,7 @@ export default function AppSettingsPage() {
     twilioAuthToken: settings.twilioAuthToken || '',
     twilioPhoneNumber: settings.twilioPhoneNumber || '',
     twilioVerifySid: settings.twilioVerifySid || '',
+    googleSheetUrl: settings.googleSheetUrl || '',
   });
 
   const [toastActive, setToastActive] = useState(false);
@@ -162,6 +164,18 @@ export default function AppSettingsPage() {
                   <TextField label="Twilio Auth Token" name="twilioAuthToken" type="password" value={formState.twilioAuthToken} onChange={(value) => handleFormChange('twilioAuthToken', value)} autoComplete="off" />
                   <TextField label="Twilio Phone Number" name="twilioPhoneNumber" value={formState.twilioPhoneNumber} onChange={(value) => handleFormChange('twilioPhoneNumber', value)} autoComplete="off" />
                   <TextField label="Twilio Verify Service SID" name="twilioVerifySid" value={formState.twilioVerifySid} onChange={(value) => handleFormChange('twilioVerifySid', value)} autoComplete="off" />
+
+                  <Divider />
+
+                  <Text as="h2" variant="headingMd">Google Sheets Integration</Text>
+                  <TextField
+                    label="Google Sheet Web App URL"
+                    name="googleSheetUrl"
+                    value={formState.googleSheetUrl}
+                    onChange={(value) => handleFormChange('googleSheetUrl', value)}
+                    helpText="Enter the Web App URL from your Google Apps Script."
+                    autoComplete="off"
+                  />
 
                   <Button submit variant="primary">Save Settings</Button>
                 </BlockStack>

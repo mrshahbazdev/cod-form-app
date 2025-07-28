@@ -1,5 +1,6 @@
+import { useState, useCallback } from "react";
 import { json } from "@remix-run/node";
-import { useLoaderData, useSubmit, Form, useLocation } from "@remix-run/react";
+import { useLoaderData, useSubmit, Form, useActionData, useLocation } from "@remix-run/react";
 import {
   Page,
   Layout,
@@ -68,15 +69,21 @@ export async function action({ request }) {
 
 export default function IpBlockingPage() {
   const { blockedIps, pageInfo, totalCount } = useLoaderData();
+  const actionData = useActionData();
   const submit = useSubmit();
   const location = useLocation();
   const currentPage = new URLSearchParams(location.search).get("page") || 1;
 
-  const handleAddIp = (event) => {
-    const formData = new FormData(event.currentTarget);
-    submit(formData, { method: "post" });
-    event.currentTarget.reset(); // Form ko reset karein
-  };
+  // NAYI TABDEELI: Input field ke liye state banayein
+  const [ipInput, setIpInput] = useState("");
+  const handleIpInputChange = useCallback((value) => setIpInput(value), []);
+
+  // Jab form kamyabi se submit ho, to input field ko khali kar dein
+  useEffect(() => {
+    if (actionData?.success) {
+      setIpInput("");
+    }
+  }, [actionData]);
 
   const handleDelete = (id) => {
     const formData = new FormData();
@@ -105,11 +112,13 @@ export default function IpBlockingPage() {
           <Card>
             <BlockStack gap="500">
               <Text as="h2" variant="headingMd">Manually Block an IP Address</Text>
-              <Form onSubmit={handleAddIp} method="post">
+              <Form method="post">
                 <input type="hidden" name="_action" value="add_ip" />
                 <TextField
                   label="IP Address"
                   name="ipAddress"
+                  value={ipInput}
+                  onChange={handleIpInputChange}
                   autoComplete="off"
                   placeholder="e.g., 192.168.1.1"
                   connectedRight={<Button submit>Block IP</Button>}

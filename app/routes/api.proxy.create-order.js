@@ -182,6 +182,30 @@ export async function action({ request }) {
           data: { shop: session.shop, phone: customer.phone }
         });
       }
+
+      if (settings?.googleSheetUrl) {
+        try {
+          const productTitles = cartItems.map(item => `${item.quantity}x ${item.title}`);
+          const totalAmount = (cartItems.reduce((sum, item) => sum + item.final_line_price, 0) + (shippingInfo.rate * 100)) / 100;
+
+          const sheetData = {
+            orderId: finalOrder.legacyResourceId,
+            customer: customer,
+            products: productTitles,
+            total: `${shippingInfo.currency} ${totalAmount.toFixed(2)}`
+          };
+
+          fetch(settings.googleSheetUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(sheetData)
+          }).catch(err => console.error("Google Sheet fetch error:", err));
+
+        } catch (sheetError) {
+          console.error("Error preparing data for Google Sheet:", sheetError);
+        }
+      }
+
       return json({ success: true, orderId: finalOrder.legacyResourceId });
     } else {
       return json({ success: true, orderId: null });
