@@ -2,22 +2,22 @@
   "name": "cod-form-app",
   "private": true,
   "scripts": {
-    "build": "remix vite:build",
-    "dev": "shopify app dev",
-    "config:link": "shopify app config link",
-    "generate": "shopify app generate",
-    "deploy": "shopify app deploy",
-    "config:use": "shopify app config use",
-    "env": "shopify app env",
-    "start": "npm run setup && node ./node_modules/@remix-run/serve/dist/cli.js ./build/server/index.js --port=$PORT",
-    "docker-start": "npm run setup && npm run start",
-    "setup": "prisma generate && prisma migrate deploy",
-    "lint": "eslint --cache --cache-location ./node_modules/.cache/eslint .",
-    "shopify": "shopify",
-    "prisma": "prisma",
-    "graphql-codegen": "graphql-codegen",
-    "vite": "vite"
-  },
+  "build": "remix vite:build",
+  "dev": "shopify app dev",
+  "config:link": "shopify app config link",
+  "generate": "shopify app generate",
+  "deploy": "shopify app deploy",
+  "config:use": "shopify app config use",
+  "env": "shopify app env",
+  "start": "npm run setup && node ./node_modules/@remix-run/serve/dist/cli.js ./build/server/index.js --port=$PORT",
+  "docker-start": "npm run setup && npm run start",
+  "setup": "prisma generate && prisma migrate deploy",
+  "lint": "eslint --cache --cache-location ./node_modules/.cache/eslint .",
+  "shopify": "shopify",
+  "prisma": "prisma",
+  "graphql-codegen": "graphql-codegen",
+  "vite": "vite"
+},
   "type": "module",
   "engines": {
     "node": "^18.20 || ^20.10 || >=21.0.0"
@@ -37,9 +37,7 @@
     "prisma": "^6.2.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "vite-tsconfig-paths": "^5.0.1",
-    "typescript": "^5.2.2",
-    "vite": "^6.2.2"
+    "vite-tsconfig-paths": "^5.0.1"
   },
   "devDependencies": {
     "@remix-run/eslint-config": "^2.16.1",
@@ -51,7 +49,9 @@
     "@types/react-dom": "^18.2.14",
     "eslint": "^8.42.0",
     "eslint-config-prettier": "^10.0.1",
-    "prettier": "^3.2.4"
+    "prettier": "^3.2.4",
+    "typescript": "^5.2.2",
+    "vite": "^6.2.2"
   },
   "workspaces": [
     "extensions/*"

@@ -1,32 +1,20 @@
 import { useState, useCallback, useEffect } from "react";
 import { json } from "@remix-run/node";
 import { useLoaderData, useSubmit, Form, useActionData } from "@remix-run/react";
-import {
-  Page,
-  Layout,
-  Card,
-  TextField,
-  Button,
-  IndexTable,
-  Text,
-  BlockStack,
-  InlineStack,
-  Select,
-} from "@shopify/polaris";
+import { Page, Layout, Card, TextField, Button, IndexTable, Text, BlockStack, InlineStack, Select } from "@shopify/polaris";
 import { authenticate } from "../shopify.server";
-import db from "../db.server";
+// NAYI TABDEELI: Humne yahan se 'db' ka import hata diya hai
 
 export async function loader({ request }) {
+  const db = (await import("../db.server")).default; // NAYI TABDEELI: 'db' ko yahan import karein
   const { session } = await authenticate.admin(request);
   const { shop } = session;
-  const shippingRates = await db.shippingRate.findMany({
-    where: { shop },
-    orderBy: [{ country: "asc" }, { city: "asc" }],
-  });
+  const shippingRates = await db.shippingRate.findMany({ where: { shop }, orderBy: [{ country: "asc" }, { city: "asc" }] });
   return json({ rates: shippingRates });
 }
 
 export async function action({ request }) {
+  const db = (await import("../db.server")).default; // NAYI TABDEELI: 'db' ko yahan import karein
   const { session } = await authenticate.admin(request);
   const { shop } = session;
   const formData = await request.formData();
@@ -52,6 +40,7 @@ export async function action({ request }) {
   return json({ success: true });
 }
 
+// Baqi tamam code pehle jaisa hi hai...
 export default function ShippingRatesPage() {
   const { rates } = useLoaderData();
   const actionData = useActionData();
