@@ -24,7 +24,7 @@ export default function App() {
         </Link>
         {/* NAYI TABDEELI: Shipping Rates ka link yahan add kiya gaya hai */}
         <Link to="/app/shipping">Shipping Rates</Link>
-        <Link to="/app/additional">Additional page</Link>
+          <Link to="/app/ip-blocking">IP Blocking</Link> {/* YEH NAYA LINK HAI */}
         <Link to="/app/settings">Settings</Link>
       </NavMenu>
       <Outlet />

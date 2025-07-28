@@ -58,3 +58,21 @@ model AppSettings {
   orderSpamTimeLimit         Int?     @default(5) // Minutes
 }
 
+model OrderLog {
+  id        Int      @id @default(autoincrement())
+  shop      String
+  phone     String
+  createdAt DateTime @default(now())
+
+  @@index([shop, phone])
+}
+
+// NAYI TABLE IP BLOCKING KE LIYE:
+model BlockedIp {
+  id        Int      @id @default(autoincrement())
+  shop      String
+  ipAddress String
+  createdAt DateTime @default(now())
+
+  @@unique([shop, ipAddress], name: "shop_ip")
+}
