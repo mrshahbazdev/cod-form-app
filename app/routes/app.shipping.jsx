@@ -60,10 +60,19 @@ export default function ShippingRatesPage() {
   const [isEditing, setIsEditing] = useState(null);
   const [formState, setFormState] = useState({ country: '', city: '', rate: '', currency: '' });
 
+  // State for the "Add City" form
+  const countries = [...new Set(rates.map(rate => rate.country))];
+  const [selectedCountryForNewCity, setSelectedCountryForNewCity] = useState(countries[0] || "");
+  const [newCity, setNewCity] = useState("");
+  const [newCityRate, setNewCityRate] = useState("");
+  const [newCityCurrency, setNewCityCurrency] = useState("PKR");
+
   useEffect(() => {
     if (actionData?.success) {
       setIsEditing(null);
       setFormState({ country: '', city: '', rate: '', currency: '' });
+      setNewCity('');
+      setNewCityRate('');
     }
   }, [actionData]);
 
@@ -75,6 +84,7 @@ export default function ShippingRatesPage() {
       rate: rate.rate,
       currency: rate.currency,
     });
+    window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll to top to show the edit form
   };
 
   const handleFormChange = (key, value) => {
@@ -88,7 +98,6 @@ export default function ShippingRatesPage() {
     submit(formData, { method: "post" });
   };
 
-  const countries = [...new Set(rates.map(rate => rate.country))];
   const [selectedCountryFilter, setSelectedCountryFilter] = useState("");
   const countryOptions = countries.map(country => ({ label: country, value: country }));
 
@@ -96,24 +105,66 @@ export default function ShippingRatesPage() {
     <Page>
       <ui-title-bar title="Manage Shipping Rates" />
       <Layout>
+        {isEditing && (
+          <Layout.Section>
+            <Card>
+              <BlockStack gap="500">
+                <Text as="h2" variant="headingMd">{`Editing Rate for ${formState.country}`}</Text>
+                <Form method="post">
+                  <input type="hidden" name="_action" value="add_or_update_rate" />
+                  <InlineStack gap="400" align="start" blockAlign="end">
+                    <div style={{ flex: 1 }}><TextField label="Country Name" name="country" value={formState.country} onChange={(val) => handleFormChange('country', val)} autoComplete="off" disabled /></div>
+                    <div style={{ flex: 1 }}><TextField label="City (Optional for default)" name="city" value={formState.city} onChange={(val) => handleFormChange('city', val)} autoComplete="off" disabled /></div>
+                    <div style={{ flex: 1 }}><TextField label="Rate" name="rate" type="number" value={formState.rate} onChange={(val) => handleFormChange('rate', val)} autoComplete="off" /></div>
+                    <div style={{ flex: 0.5 }}><TextField label="Currency" name="currency" value={formState.currency} onChange={(val) => handleFormChange('currency', val)} autoComplete="off" /></div>
+                    <div><Button submit variant="primary">Update</Button></div>
+                    <Button onClick={() => setIsEditing(null)}>Cancel</Button>
+                  </InlineStack>
+                </Form>
+              </BlockStack>
+            </Card>
+          </Layout.Section>
+        )}
+
         <Layout.Section>
           <Card>
             <BlockStack gap="500">
-              <Text as="h2" variant="headingMd">{isEditing ? `Editing Rate for ${formState.country}` : "Add New Rate"}</Text>
+              <Text as="h2" variant="headingMd">Add New Country / Default Rate</Text>
+              <Text>Use this form to add a new country or update a country's default rate (leave City blank).</Text>
               <Form method="post">
                 <input type="hidden" name="_action" value="add_or_update_rate" />
+                <input type="hidden" name="city" value="" />
                 <InlineStack gap="400" align="start" blockAlign="end">
-                  <div style={{ flex: 1 }}><TextField label="Country Name" name="country" value={formState.country} onChange={(val) => handleFormChange('country', val)} autoComplete="off" placeholder="e.g., Pakistan" disabled={isEditing} /></div>
-                  <div style={{ flex: 1 }}><TextField label="City (Optional for default)" name="city" value={formState.city} onChange={(val) => handleFormChange('city', val)} autoComplete="off" placeholder="e.g., Karachi" disabled={isEditing} /></div>
-                  <div style={{ flex: 1 }}><TextField label="Rate" name="rate" type="number" value={formState.rate} onChange={(val) => handleFormChange('rate', val)} autoComplete="off" placeholder="e.g., 250" /></div>
-                  <div style={{ flex: 0.5 }}><TextField label="Currency" name="currency" value={formState.currency} onChange={(val) => handleFormChange('currency', val)} autoComplete="off" placeholder="e.g., PKR" /></div>
-                  <div><Button submit variant="primary">{isEditing ? "Update" : "Add"}</Button></div>
-                  {isEditing && <Button onClick={() => { setIsEditing(null); setFormState({ country: '', city: '', rate: '', currency: '' }); }}>Cancel</Button>}
+                  <div style={{ flex: 1 }}><TextField label="Country Name" name="country" autoComplete="off" placeholder="e.g., Pakistan" /></div>
+                  <div style={{ flex: 1 }}><TextField label="Default Rate" name="rate" type="number" autoComplete="off" placeholder="e.g., 250" /></div>
+                  <div style={{ flex: 0.5 }}><TextField label="Currency" name="currency" autoComplete="off" placeholder="e.g., PKR" /></div>
+                  <div><Button submit variant="primary">Save Default Rate</Button></div>
                 </InlineStack>
               </Form>
             </BlockStack>
           </Card>
         </Layout.Section>
+
+        <Layout.Section>
+          <Card>
+            <BlockStack gap="500">
+              <Text as="h2" variant="headingMd">Add City-Specific Rate</Text>
+              <Form method="post">
+                <input type="hidden" name="_action" value="add_or_update_rate" />
+                <InlineStack gap="400" align="start" blockAlign="end">
+                  <div style={{ flex: 1 }}>
+                    <Select label="Select Country" options={countryOptions} onChange={setSelectedCountryForNewCity} value={selectedCountryForNewCity} name="country" />
+                  </div>
+                  <div style={{ flex: 1 }}><TextField label="City Name" name="city" value={newCity} onChange={setNewCity} autoComplete="off" placeholder="e.g., Karachi" /></div>
+                  <div style={{ flex: 1 }}><TextField label="Specific Rate" name="rate" type="number" value={newCityRate} onChange={setNewCityRate} autoComplete="off" placeholder="e.g., 150" /></div>
+                  <div style={{ flex: 0.5 }}><TextField label="Currency" name="currency" value={newCityCurrency} onChange={setNewCityCurrency} autoComplete="off" placeholder="e.g., PKR" /></div>
+                  <div><Button submit variant="primary">Add City Rate</Button></div>
+                </InlineStack>
+              </Form>
+            </BlockStack>
+          </Card>
+        </Layout.Section>
+
         <Layout.Section>
           <Card>
             <BlockStack gap="500">
