@@ -64,7 +64,7 @@ export default function ShippingRatesPage() {
   const [selectedCountryForNewCity, setSelectedCountryForNewCity] = useState(countries[0] || "");
   const [newCity, setNewCity] = useState("");
   const [newCityRate, setNewCityRate] = useState("");
-  const [newCityCurrency, setNewCityCurrency] = useState("PKR");
+  const [newCityCurrency, setNewCityCurrency] = useState("");
 
   const [newCountry, setNewCountry] = useState("");
   const [newCountryRate, setNewCountryRate] = useState("");
@@ -103,6 +103,17 @@ export default function ShippingRatesPage() {
     submit(formData, { method: "post" });
   };
 
+  // NAYI TABDEELI: Jab country select ho, to currency update karein
+  useEffect(() => {
+      const defaultRateForCountry = rates.find(r => r.country === selectedCountryForNewCity && r.city === "");
+      if (defaultRateForCountry) {
+          setNewCityCurrency(defaultRateForCountry.currency);
+      } else {
+          setNewCityCurrency("PKR"); // Fallback
+      }
+  }, [selectedCountryForNewCity, rates]);
+
+
   const [selectedCountryFilter, setSelectedCountryFilter] = useState("");
   const countryOptions = countries.map(country => ({ label: country, value: country }));
 
@@ -117,9 +128,12 @@ export default function ShippingRatesPage() {
                 <Text as="h2" variant="headingMd">{`Editing Rate for ${formState.country}`}</Text>
                 <Form method="post">
                   <input type="hidden" name="_action" value="add_or_update_rate" />
+                  {/* NAYI TABDEELI: Hidden fields taake update kaam kare */}
+                  <input type="hidden" name="country" value={formState.country} />
+                  <input type="hidden" name="city" value={formState.city} />
                   <InlineStack gap="400" align="start" blockAlign="end">
-                    <div style={{ flex: 1 }}><TextField label="Country Name" name="country" value={formState.country} onChange={(val) => handleFormChange('country', val)} autoComplete="off" disabled /></div>
-                    <div style={{ flex: 1 }}><TextField label="City (Optional for default)" name="city" value={formState.city} onChange={(val) => handleFormChange('city', val)} autoComplete="off" disabled /></div>
+                    <div style={{ flex: 1 }}><TextField label="Country Name" value={formState.country} autoComplete="off" disabled /></div>
+                    <div style={{ flex: 1 }}><TextField label="City (Optional for default)" value={formState.city} autoComplete="off" disabled /></div>
                     <div style={{ flex: 1 }}><TextField label="Rate" name="rate" type="number" value={formState.rate} onChange={(val) => handleFormChange('rate', val)} autoComplete="off" /></div>
                     <div style={{ flex: 0.5 }}><TextField label="Currency" name="currency" value={formState.currency} onChange={(val) => handleFormChange('currency', val)} autoComplete="off" /></div>
                     <div><Button submit variant="primary">Update</Button></div>
@@ -156,13 +170,14 @@ export default function ShippingRatesPage() {
               <Text as="h2" variant="headingMd">Add City-Specific Rate</Text>
               <Form method="post">
                 <input type="hidden" name="_action" value="add_or_update_rate" />
+                <input type="hidden" name="currency" value={newCityCurrency} />
                 <InlineStack gap="400" align="start" blockAlign="end">
                   <div style={{ flex: 1 }}>
                     <Select label="Select Country" options={countryOptions} onChange={setSelectedCountryForNewCity} value={selectedCountryForNewCity} name="country" />
                   </div>
                   <div style={{ flex: 1 }}><TextField label="City Name" name="city" value={newCity} onChange={setNewCity} autoComplete="off" placeholder="e.g., Karachi" /></div>
                   <div style={{ flex: 1 }}><TextField label="Specific Rate" name="rate" type="number" value={newCityRate} onChange={setNewCityRate} autoComplete="off" placeholder="e.g., 150" /></div>
-                  <div style={{ flex: 0.5 }}><TextField label="Currency" name="currency" value={newCityCurrency} onChange={setNewCityCurrency} autoComplete="off" placeholder="e.g., PKR" /></div>
+                  <div style={{ flex: 0.5 }}><TextField label="Currency" value={newCityCurrency} autoComplete="off" disabled /></div>
                   <div><Button submit variant="primary">Add City Rate</Button></div>
                 </InlineStack>
               </Form>
