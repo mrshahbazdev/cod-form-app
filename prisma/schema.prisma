@@ -42,5 +42,22 @@ model ShippingRate {
   @@unique([shop, country, city], name: "shop_country_city")
 }
 
+model AppSettings {
+  id          Int      @id @default(autoincrement())
+  shop        String   @unique
+  otpEnabled  Boolean  @default(false)
+  // Mustaqbil mein hum yahan SMS service ki API keys bhi save karenge
+  // smsApiKey   String?
+  // smsApiSecret String?
+}
 
+model OtpLog {
+  id        Int      @id @default(autoincrement())
+  shop      String
+  phone     String
+  otp       String
+  createdAt DateTime @default(now())
+
+  @@index([shop, phone])
+}
 

@@ -97,7 +97,7 @@
 
       {% if block.settings.show_city_field %}
         <div class="cod-form-field">
-          <label for="cod-city-{{ section.id }}-{{ block.id }}" style="color: {{ block.settings.form_label_color }};">City *</label>
+          <label for="cod-city-{{ section.id }}-{{ block.id }}" style="color: {{ block.settings.form_label_color }};">Provinces *</label>
           <select id="cod-city-{{ section.id }}-{{ block.id }}" name="city" required></select>
         </div>
       {% endif %}
@@ -231,7 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const updateCities = () => {
     const selectedCountry = countrySelect.value;
-    citySelect.innerHTML = '<option value="">Select City</option>';
+    citySelect.innerHTML = '<option value="">Select Provinces</option>';
     if (locationData[selectedCountry] && locationData[selectedCountry].cities) {
       locationData[selectedCountry].cities.forEach(city => {
         const option = document.createElement('option');
