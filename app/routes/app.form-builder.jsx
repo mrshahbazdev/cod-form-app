@@ -15,10 +15,9 @@ import {
   Checkbox,
 } from "@shopify/polaris";
 import { authenticate } from "../shopify.server";
-// NAYI TABDEELI: Humne yahan se 'db' ka import hata diya hai
+import db from "../db.server";
 
 export async function loader({ request }) {
-  const db = (await import("../db.server")).default; // NAYI TABDEELI: 'db' ko yahan import karein
   const { session } = await authenticate.admin(request);
   const formFields = await db.formField.findMany({
     where: { shop: session.shop },
@@ -28,7 +27,6 @@ export async function loader({ request }) {
 }
 
 export async function action({ request }) {
-  const db = (await import("../db.server")).default; // NAYI TABDEELI: 'db' ko yahan import karein
   const { session } = await authenticate.admin(request);
   const { shop } = session;
   const formData = await request.formData();

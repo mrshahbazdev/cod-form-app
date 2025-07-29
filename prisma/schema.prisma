@@ -106,3 +106,16 @@ model UpsellOffer {
 
   @@unique([shop, triggerProductId])
 }
+model FormField {
+  id          Int     @id @default(autoincrement())
+  shop        String
+  fieldType   String  // e.g., 'text', 'email', 'tel', 'select'
+  name        String  // e.g., 'customer_name', 'customer_phone'
+  label       String
+  placeholder String?
+  isRequired  Boolean @default(true)
+  sortOrder   Int     @default(0)
+
+  @@unique([shop, name])
+  @@index([shop])
+}
