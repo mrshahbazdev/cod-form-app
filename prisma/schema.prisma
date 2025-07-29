@@ -96,3 +96,13 @@ model IpOrderLog {
 
   @@index([shop, ipAddress])
 }
+model UpsellOffer {
+  id              Int     @id @default(autoincrement())
+  shop            String
+  triggerProductId String   // Jab yeh product khareeda jaye...
+  offerProductId  String   // ...to yeh product offer karo
+  discountType    String   // "PERCENTAGE" ya "FIXED_AMOUNT"
+  discountValue   Float
+
+  @@unique([shop, triggerProductId])
+}

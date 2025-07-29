@@ -23,6 +23,7 @@ export default function App() {
           Home
         </Link>
         <Link to="/app/shipping">Shipping Rates</Link>
+        <Link to="/app/form-builder">Form Builder</Link>
         <Link to="/app/ip-blocking">IP Blocking</Link>
         <Link to="/app/settings">Settings</Link>
         <Link to="/app/gsheets-guide">Google Sheets Guide</Link>
