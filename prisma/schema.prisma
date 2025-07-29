@@ -47,26 +47,31 @@ model AppSettings {
   id                         Int      @id @default(autoincrement())
   shop                       String   @unique
   otpEnabled                 Boolean  @default(false)
-
   twilioAccountSid           String?
   twilioAuthToken            String?
   twilioPhoneNumber          String?
   twilioVerifySid            String?
-
   orderSpamProtectionEnabled Boolean  @default(false)
   orderSpamTimeLimit         Int?     @default(5)
-
   autoIpBlockingEnabled      Boolean  @default(false)
   ipBlockAttemptLimit        Int?     @default(3)
   ipBlockTimeFrame           Int?     @default(5)
-
   googleSheetUrl             String?
-
-  // NAYI FIELDS PIXEL TRACKING KE LIYE:
   facebookPixelId            String?
   tiktokPixelId              String?
   snapchatPixelId            String?
-  googleAnalyticsId          String? // For GA4
+  googleAnalyticsId          String?
+
+  // NAYI FIELDS FORM DESIGNER KE LIYE:
+  formTitle                  String?  @default("Cash on Delivery")
+  formSubtitle               String?  @default("Please enter your shipping address")
+  buttonText                 String?  @default("Complete Order")
+
+  formBgColor                String?  @default("#FFFFFF")
+  formTextColor              String?  @default("#000000")
+  formLabelColor             String?  @default("#333333")
+  buttonColor                String?  @default("#008060")
+  buttonTextColor            String?  @default("#FFFFFF")
 }
 
 model OrderLog {
